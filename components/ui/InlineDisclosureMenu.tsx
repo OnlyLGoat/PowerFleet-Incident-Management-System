@@ -18,19 +18,44 @@ interface InlineDisclosureMenuProps {
 
 export default function InlineDisclosureMenu({ actions }: InlineDisclosureMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number; openUpward: boolean } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
+  const toggleMenu = () => {
+    if (!isOpen && menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpward = spaceBelow < 200;
+
+      setMenuPos({
+        top: openUpward ? undefined : rect.bottom + 6,
+        bottom: openUpward ? window.innerHeight - rect.top + 6 : undefined,
+        right: window.innerWidth - rect.right,
+        openUpward,
+      });
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  // Close when clicking outside, scrolling, or resizing
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    const handleClose = (e: Event) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("mousedown", handleClose);
+      window.addEventListener("scroll", handleClose, true);
+      window.addEventListener("resize", handleClose);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("mousedown", handleClose);
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+    };
   }, [isOpen]);
 
   if (!actions || actions.length === 0) return null;
@@ -39,7 +64,7 @@ export default function InlineDisclosureMenu({ actions }: InlineDisclosureMenuPr
     <div className="relative" ref={menuRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleMenu}
         className={cn(
           "flex items-center justify-center size-8 rounded-lg transition-colors",
           isOpen
@@ -51,13 +76,22 @@ export default function InlineDisclosureMenu({ actions }: InlineDisclosureMenuPr
       </button>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && menuPos && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -5 }}
+            initial={{ opacity: 0, scale: 0.95, y: menuPos.openUpward ? 6 : -6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -5 }}
+            exit={{ opacity: 0, scale: 0.95, y: menuPos.openUpward ? 6 : -6 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl z-50 origin-top-right"
+            style={{
+              position: "fixed",
+              top: menuPos.top,
+              bottom: menuPos.bottom,
+              right: menuPos.right,
+            }}
+            className={cn(
+              "w-48 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-2xl z-[99999]",
+              menuPos.openUpward ? "origin-bottom-right" : "origin-top-right"
+            )}
           >
             <div className="flex flex-col gap-0.5">
               {actions.map((action, idx) => (

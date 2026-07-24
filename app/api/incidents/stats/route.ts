@@ -286,7 +286,8 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
         dailyCategoryBreakdown,
         dailyStatusBreakdown,
         recentIncidents: recentIncidents.map((inc) => ({
-          id: `INC-${inc.id}`,
+          id: inc.id,
+          ticketCode: `INC-${inc.id}`,
           title: inc.title,
           type: inc.type,
           priority: inc.priority,

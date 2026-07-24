@@ -10,7 +10,8 @@ import { withAudit } from "@/lib/utils/audit";
 export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'GET /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {
@@ -142,7 +143,8 @@ export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { para
 export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'PATCH /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {
@@ -171,7 +173,8 @@ export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { pa
 export const DELETE = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'DELETE /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {

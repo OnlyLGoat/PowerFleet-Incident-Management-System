@@ -19,9 +19,9 @@ import {
   CheckSquare,
   Trash2
 } from "lucide-react";
-import InlineDisclosureMenu, { MenuAction } from "@/components/ui/InlineDisclosureMenu";
+import Link from "next/link";
 import { 
-  AreaChart, 
+  AreaChart,  
   Area, 
   XAxis, 
   YAxis, 
@@ -433,25 +433,7 @@ export default function IncidentsDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {stats?.recentIncidents.map((item) => {
-                  
-                  // RBAC Menu Actions
-                  const menuActions: MenuAction[] = [
-                    { label: "View Incident", icon: Eye, onClick: () => console.log("View", item.id) }
-                  ];
-
-                  if (isClient) {
-                    menuActions.push({ label: "Edit Details", icon: Edit, onClick: () => console.log("Edit", item.id) });
-                  } else if (role === "Technician") {
-                    menuActions.push({ label: "Add Internal Note", icon: MessageSquare, onClick: () => console.log("Note", item.id) });
-                  } else if (isAdmin || role === "Support Manager") {
-                    menuActions.push({ label: "Resolve Incident", icon: CheckSquare, onClick: () => console.log("Resolve", item.id) });
-                    if (isAdmin) {
-                      menuActions.push({ label: "Delete Ticket", icon: Trash2, onClick: () => console.log("Delete", item.id), destructive: true });
-                    }
-                  }
-
-                  return (
+                {stats?.recentIncidents.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-3">
@@ -476,50 +458,26 @@ export default function IncidentsDashboardPage() {
                       </td>
 
                       <td className="py-3 px-2">
-                        {isClient ? (
-                          <span className="px-2.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            {item.status}
-                          </span>
-                        ) : (
-                          <select
-                            defaultValue={item.status}
-                            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-28"
-                          >
-                            <option value="New">New</option>
-                            <option value="Open">Open</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Waiting Client">Waiting Client</option>
-                            <option value="Resolved">Resolved</option>
-                            <option value="Closed">Closed</option>
-                          </select>
-                        )}
+                        <span className="px-2.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {item.status}
+                        </span>
                       </td>
 
                       <td className="py-3 px-2">
-                        {isClient ? (
-                          <span className="text-slate-600 dark:text-slate-400">{item.assignedTo || "Unassigned"}</span>
-                        ) : isAdmin || role === "Support Manager" ? (
-                          <select
-                            defaultValue={item.assignedTo || ""}
-                            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-32"
-                          >
-                            <option value="">Unassigned</option>
-                            <option value="John Technician">John Technician</option>
-                            <option value="Sarah Mechanic">Sarah Mechanic</option>
-                          </select>
-                        ) : (
-                          <span className="text-slate-600 dark:text-slate-400 font-medium">{item.assignedTo || "Unassigned"}</span>
-                        )}
+                        <span className="text-slate-600 dark:text-slate-400 font-medium text-[11px]">{item.assignedTo || "Unassigned"}</span>
                       </td>
 
                       <td className="py-3 px-2 text-right">
-                        <div className="flex justify-end">
-                          <InlineDisclosureMenu actions={menuActions} />
-                        </div>
+                        <Link
+                          href={`/incidents/${item.id}`}
+                          className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium text-xs px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <Eye className="size-3.5" />
+                          <span>View</span>
+                        </Link>
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>

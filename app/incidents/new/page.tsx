@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { ArrowLeft, Car, AlertTriangle, MapPin, AlignLeft, Info, Search, Check } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/app/context/AuthContext";
 import RunActionButton, { type RunActionState } from "@/components/ui/RunActionButton";
 
 // Incident Types
@@ -30,6 +31,14 @@ interface SearchResult {
 
 export default function NewIncidentPage() {
   const router = useRouter();
+  const { role } = useAuth();
+
+  // Route protection: only ClientUsers are allowed to create incidents
+  useEffect(() => {
+    if (role && role !== "ClientUser") {
+      router.replace("/incidents/dashboard");
+    }
+  }, [role, router]);
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(true);

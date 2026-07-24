@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
+import Link from "next/link";
+import { useTheme } from "@/components/theme-provider";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -84,11 +85,16 @@ export default function Header({
         
         {/* 1. Left Section: Logo & Page Title */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 select-none">
+          <Link href="/incidents/dashboard" className="flex items-center gap-3 select-none group">
+            <img
+              src="/logo.jpg"
+              alt="PowerFleet Logo"
+              className="size-8 rounded-lg object-cover shadow-md group-hover:scale-105 transition-transform border border-slate-200/50 dark:border-slate-800/50"
+            />
             <span className="hidden font-extrabold tracking-tighter text-slate-900 dark:text-white sm:inline-block text-lg">
               POWER FLEET <span className="text-emerald-500 dark:text-emerald-400">IMS</span>
             </span>
-          </div>
+          </Link>
 
           <div className="hidden h-5 w-px bg-slate-200 dark:bg-slate-800 md:block" />
 
@@ -186,9 +192,9 @@ export default function Header({
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center gap-2.5 rounded-full p-1 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-100/50 dark:bg-slate-900/50 transition-all cursor-pointer select-none"
             >
-              {/* Avatar initials */}
-              <div className="flex size-8 items-center justify-center rounded-full bg-slate-900 dark:bg-emerald-400 text-slate-100 dark:text-slate-950 font-bold text-xs shadow-sm">
-                {getInitials(user?.name)}
+              {/* User icon */}
+              <div className="flex size-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm">
+                <User className="size-4" />
               </div>
               <ChevronDown className={cn("size-3.5 text-slate-400 transition-transform duration-200 mr-1", isProfileOpen && "rotate-180")} />
             </button>
