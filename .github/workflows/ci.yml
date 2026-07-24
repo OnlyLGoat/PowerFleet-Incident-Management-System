@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps --ignore-scripts
       - run: npm run lint
 
   typecheck:
@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps --ignore-scripts
       - run: npx tsc --noEmit
 
   test:
@@ -57,7 +57,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps --ignore-scripts
       - name: Push DB Schema
         run: npx drizzle-kit push
         env:
@@ -77,5 +77,5 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps --ignore-scripts
       - run: npm run build

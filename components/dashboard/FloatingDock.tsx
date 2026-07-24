@@ -1,0 +1,153 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { 
+  LayoutDashboard, 
+  Truck, 
+  AlertTriangle, 
+  CheckSquare, 
+  BarChart3, 
+  ChevronDown,
+  ChevronUp,
+  type LucideIcon
+} from "lucide-react";
+
+export interface NavItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  badgeCount?: number;
+}
+
+export interface FloatingDockProps {
+  items?: NavItem[];
+  className?: string;
+}
+
+export const DEFAULT_NAV_ITEMS: NavItem[] = [
+  { id: "dashboard", label: "Dashboard", href: "/incidents/dashboard", icon: LayoutDashboard },
+  { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle, badgeCount: 3 },
+  { id: "my-tasks", label: "My Tasks", href: "/my-tasks", icon: CheckSquare },
+  { id: "fleet", label: "Vehicles", href: "/vehicles", icon: Truck },
+  { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
+];
+
+/**
+ * Floating Dock Navigation Component
+ * Tactile floating navigation pill synced with Next.js App Router URLs.
+ */
+export default function FloatingDock({
+  items = DEFAULT_NAV_ITEMS,
+  className,
+}: Readonly<FloatingDockProps>) {
+  const pathname = usePathname();
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div
+      className={cn(
+        "fixed bottom-7 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center pointer-events-auto",
+        className
+      )}
+    >
+      <motion.nav
+        layout
+        initial={{ borderRadius: 9999 }}
+        aria-label="Main Navigation"
+        className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2.5 rounded-full bg-slate-900/90 dark:bg-slate-900/95 border border-slate-800/90 shadow-2xl backdrop-blur-2xl text-slate-400 max-w-[95vw] overflow-x-auto no-scrollbar"
+      >
+        <AnimatePresence mode="popLayout">
+          {isExpanded && items.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href !== "/incidents" && pathname.startsWith(item.href));
+
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                transition={{ duration: 0.2, type: "spring", stiffness: 300, damping: 25 }}
+              >
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "relative flex items-center gap-1.5 sm:gap-2.5 px-2.5 py-2 sm:px-5 sm:py-3 rounded-full text-[10px] sm:text-xs font-semibold transition-colors duration-200 cursor-pointer select-none",
+                    isActive
+                      ? "text-slate-950 font-bold"
+                      : "text-slate-400 hover:text-slate-200 dark:hover:text-slate-100"
+                  )}
+                >
+                  {/* Active Tab Sliding Indicator */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-dock-pill"
+                      className="absolute inset-0 bg-emerald-400 rounded-full shadow-md shadow-emerald-500/25"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 28,
+                      }}
+                    />
+                  )}
+
+                  {/* Icon & Label Content */}
+                  <span className="relative z-10 flex items-center gap-2.5">
+                    <Icon className="size-4 sm:size-5 shrink-0" />
+                    
+                    {/* Active item expands to reveal label */}
+                    {isActive && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="whitespace-nowrap font-bold tracking-wide text-[9px] sm:text-xs"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+
+                    {/* Badge Indicator */}
+                    {Boolean(item.badgeCount && item.badgeCount > 0) && (
+                      <span
+                        className={cn(
+                          "flex h-3 min-w-3 sm:h-4 sm:min-w-4 items-center justify-center rounded-full text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 ml-0.5",
+                          isActive
+                            ? "bg-slate-950 text-emerald-400"
+                            : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        )}
+                      >
+                        {item.badgeCount}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+
+        {/* The Toggle Collapse/Expand Button */}
+        <motion.button
+          layout
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={cn(
+            "relative flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 rounded-full transition-colors duration-200 cursor-pointer select-none outline-none",
+            isExpanded
+              ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              : "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/25 px-4 sm:px-5"
+          )}
+        >
+          {isExpanded ? <ChevronDown className="size-4 sm:size-5" /> : <ChevronUp className="size-4 sm:size-5" />}
+        </motion.button>
+      </motion.nav>
+    </div>
+  );
+}

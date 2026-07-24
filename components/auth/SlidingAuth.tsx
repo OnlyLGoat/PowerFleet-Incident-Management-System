@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 // Google SVG Icon
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -113,7 +113,7 @@ export default function SlidingAuth() {
       });
       setSuccess("Successfully logged in! Redirecting...");
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/incidents/dashboard");
       }, 1000);
     }catch(err: unknown){
       handleAuthError(err, "Invalid credentials");
@@ -147,7 +147,7 @@ export default function SlidingAuth() {
   };
 
   return (
-    <div className="flex min-h-[85vh] w-full max-w-7xl mx-auto flex-col bg-white dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-500 lg:flex-row shadow-2xl rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800">
+    <div className="flex min-h-0 lg:min-h-[80vh] w-full max-w-7xl mx-auto flex-col bg-white dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-500 lg:flex-row shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800">
       
       {/* Sliding Image Panel */}
       <motion.div 
@@ -163,9 +163,16 @@ export default function SlidingAuth() {
           />
           {/* Logo overlay */}
           <div className="absolute top-8 left-8 z-20 flex flex-col">
-            <h2 className="text-3xl font-extrabold text-white tracking-tighter drop-shadow-md">
-              POWER FLEET <span className="text-emerald-400">IMS</span>
-            </h2>
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.jpg"
+                alt="PowerFleet Logo"
+                className="size-10 rounded-xl object-cover shadow-lg border border-white/20"
+              />
+              <h2 className="text-3xl font-extrabold text-white tracking-tighter drop-shadow-md">
+                POWER FLEET <span className="text-emerald-400">IMS</span>
+              </h2>
+            </div>
             <p className="text-white/80 font-medium mt-1 drop-shadow-md">
               Next-generation fleet management.
             </p>
@@ -177,7 +184,7 @@ export default function SlidingAuth() {
       <motion.div 
         layout
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={`flex w-full flex-col items-center justify-center p-6 sm:p-12 lg:w-1/2 z-20 bg-white dark:bg-slate-900 ${isLogin ? 'order-1' : 'order-2'}`}
+        className={`flex w-full lg:w-1/2 flex-col items-center justify-center p-5 sm:p-10 lg:p-12 z-20 bg-white dark:bg-slate-900 ${isLogin ? 'order-1' : 'order-2'}`}
       >
         <AnimatePresence mode="wait">
           {isLogin ? (
@@ -189,30 +196,30 @@ export default function SlidingAuth() {
               exit="exit"
               className="w-full max-w-[400px]"
             >
-              <motion.div variants={itemVariants} className="mb-10">
-                <h1 className="mb-4 text-[48px] font-semibold leading-[1.05] tracking-tight text-slate-900 dark:text-white">
+              <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
+                <h1 className="mb-2 sm:mb-3 text-3xl sm:text-4xl lg:text-[44px] font-semibold leading-[1.1] tracking-tight text-slate-900 dark:text-white">
                   Welcome
                   <br />
                   back
                 </h1>
-                <p className="text-[15px] text-slate-500 dark:text-slate-400 text-balance">
+                <p className="text-xs sm:text-[14px] text-slate-500 dark:text-slate-400 text-balance">
                   You need to be signed in to access the fleet dashboard.
                 </p>
               </motion.div>
 
-              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-5">
+              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-3.5 sm:gap-5">
                 {error && (
-                  <div className="rounded-md bg-red-50 dark:bg-red-950/50 p-3 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+                  <div className="rounded-md bg-red-50 dark:bg-red-950/50 p-2.5 sm:p-3 text-xs sm:text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
                     {error}
                   </div>
                 )}
                 {success && (
-                  <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/50 p-3 text-sm text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/50 p-2.5 sm:p-3 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                     {success}
                   </div>
                 )}
-                <motion.div variants={itemVariants} className="flex flex-col gap-2">
-                  <label htmlFor="login-email" className="text-[14px] font-medium text-slate-800 dark:text-slate-200">
+                <motion.div variants={itemVariants} className="flex flex-col gap-1.5 sm:gap-2">
+                  <label htmlFor="login-email" className="text-xs sm:text-[14px] font-medium text-slate-800 dark:text-slate-200">
                     Email address
                   </label>
                   <input
@@ -223,7 +230,7 @@ export default function SlidingAuth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="alex.costa@example.com"
-                    className={`w-full rounded-md border bg-white dark:bg-slate-950 px-4 py-3 text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(email, 'email')}`}
+                    className={`w-full rounded-md border bg-white dark:bg-slate-950 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(email, 'email')}`}
                   />
                 </motion.div>
 
@@ -273,9 +280,36 @@ export default function SlidingAuth() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex justify-center items-center w-full rounded-md bg-emerald-500 py-3 text-[14px] font-medium text-white transition-transform active:scale-[0.98] hover:bg-emerald-600 disabled:opacity-70 disabled:pointer-events-none"
+                    className="relative flex justify-center items-center w-full rounded-md bg-emerald-500 py-3 text-[14px] font-medium text-white transition-all active:scale-[0.98] hover:bg-emerald-600 disabled:bg-emerald-600 disabled:cursor-not-allowed overflow-hidden"
                   >
-                    {isLoading ? <Loader2 className="size-5 animate-spin" /> : "Sign in"}
+                    <AnimatePresence mode="wait">
+                      {isLoading ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -15 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="flex items-center gap-2"
+                        >
+                          <svg className="animate-[spin_0.5s_linear_infinite] h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Signing in...
+                        </motion.div>
+                      ) : (
+                        <motion.span
+                          key="default"
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -15 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          Sign in
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </button>
                 </motion.div>
               </form>
@@ -290,7 +324,7 @@ export default function SlidingAuth() {
                 </button>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="mt-10 text-center text-[14px] text-slate-500 dark:text-slate-400">
+              <motion.div variants={itemVariants} className="mt-6 sm:mt-8 text-center text-xs sm:text-[14px] text-slate-500 dark:text-slate-400">
                 Haven&apos;t joined yet?{" "}
                 <button 
                   type="button"
@@ -310,18 +344,18 @@ export default function SlidingAuth() {
               exit="exit"
               className="w-full max-w-[400px]"
             >
-              <motion.div variants={itemVariants} className="mb-10">
-                <h1 className="mb-4 text-[48px] font-semibold leading-[1.05] tracking-tight text-slate-900 dark:text-white">
+              <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
+                <h1 className="mb-2 sm:mb-3 text-3xl sm:text-4xl lg:text-[44px] font-semibold leading-[1.1] tracking-tight text-slate-900 dark:text-white">
                   Join
                   <br />
                   Power Fleet
                 </h1>
-                <p className="text-[15px] text-slate-500 dark:text-slate-400 text-balance">
+                <p className="text-xs sm:text-[14px] text-slate-500 dark:text-slate-400 text-balance">
                   Create your account to start managing your incidents effectively.
                 </p>
               </motion.div>
 
-              <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-5">
+              <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-3.5 sm:gap-4">
                 {error && (
                   <div className="rounded-md bg-red-50 dark:bg-red-950/50 p-3 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
                     {error}
@@ -348,9 +382,9 @@ export default function SlidingAuth() {
                   />
                 </motion.div>
 
-                <div className="flex gap-4">
-                  <motion.div variants={itemVariants} className="flex flex-col gap-2 w-1/2">
-                    <label htmlFor="register-company" className="text-[14px] font-medium text-slate-800 dark:text-slate-200">
+                <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4">
+                  <motion.div variants={itemVariants} className="flex flex-col gap-1.5 sm:gap-2 w-full sm:w-1/2">
+                    <label htmlFor="register-company" className="text-xs sm:text-[14px] font-medium text-slate-800 dark:text-slate-200">
                       Company Name
                     </label>
                     <input
@@ -361,12 +395,12 @@ export default function SlidingAuth() {
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Acme Corp"
-                      className={`w-full rounded-md border bg-white dark:bg-slate-950 px-4 py-3 text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(companyName, 'name')}`}
+                      className={`w-full rounded-md border bg-white dark:bg-slate-950 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(companyName, 'name')}`}
                     />
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="flex flex-col gap-2 w-1/2">
-                    <label htmlFor="register-phone" className="text-[14px] font-medium text-slate-800 dark:text-slate-200">
+                  <motion.div variants={itemVariants} className="flex flex-col gap-1.5 sm:gap-2 w-full sm:w-1/2">
+                    <label htmlFor="register-phone" className="text-xs sm:text-[14px] font-medium text-slate-800 dark:text-slate-200">
                       Phone Number
                     </label>
                     <input
@@ -377,7 +411,7 @@ export default function SlidingAuth() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+212..."
-                      className={`w-full rounded-md border bg-white dark:bg-slate-950 px-4 py-3 text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(phone, 'phone')}`}
+                      className={`w-full rounded-md border bg-white dark:bg-slate-950 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-colors ${getValidationClasses(phone, 'phone')}`}
                     />
                   </motion.div>
                 </div>
@@ -427,14 +461,41 @@ export default function SlidingAuth() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex justify-center items-center w-full rounded-md bg-emerald-500 py-3 text-[14px] font-medium text-white transition-transform active:scale-[0.98] hover:bg-emerald-600 disabled:opacity-70 disabled:pointer-events-none"
+                    className="relative flex justify-center items-center w-full rounded-md bg-emerald-500 py-3 text-[14px] font-medium text-white transition-all active:scale-[0.98] hover:bg-emerald-600 disabled:bg-emerald-600 disabled:cursor-not-allowed overflow-hidden"
                   >
-                    {isLoading ? <Loader2 className="size-5 animate-spin" /> : "Create account"}
+                    <AnimatePresence mode="wait">
+                      {isLoading ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -15 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="flex items-center gap-2"
+                        >
+                          <svg className="animate-[spin_0.5s_linear_infinite] h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Creating account...
+                        </motion.div>
+                      ) : (
+                        <motion.span
+                          key="default"
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -15 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          Create account
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </button>
                 </motion.div>
               </form>
 
-              <motion.div variants={itemVariants} className="mt-10 text-center text-[14px] text-slate-500 dark:text-slate-400">
+              <motion.div variants={itemVariants} className="mt-6 sm:mt-8 text-center text-xs sm:text-[14px] text-slate-500 dark:text-slate-400">
                 Already have an account?{" "}
                 <button 
                   type="button"

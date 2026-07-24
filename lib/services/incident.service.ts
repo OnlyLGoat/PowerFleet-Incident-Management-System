@@ -566,7 +566,7 @@ export class IncidentService {
             }
         }
         
-        if (data.assignedToId !== undefined) {
+        if (data.assignedToId !== undefined && data.assignedToId !== null) {
             await this.checkUserNotDeleted(data.assignedToId);
             await this.checkInternalUserActive(data.assignedToId);
             
