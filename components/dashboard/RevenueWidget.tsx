@@ -13,9 +13,26 @@ export interface CategorySource {
 }
 
 export interface RevenueWidgetProps {
-  title?: string;
-  data?: CategorySource[];
+  readonly title?: string;
+  readonly data?: CategorySource[];
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload?.length) {
+    return (
+      <div className="border border-slate-700 bg-slate-900/90 text-white flex flex-col gap-1 rounded-lg p-2 text-xs shadow-lg backdrop-blur-md">
+        <span className="text-slate-400 text-[10px] font-semibold">
+          {payload[0].payload.label}
+        </span>
+        <span className="font-bold">
+          {payload[0].payload.value} tickets
+        </span>
+      </div>
+    );
+  }
+  return null;
+};
 
 const defaultData: CategorySource[] = [
   {
@@ -99,21 +116,7 @@ export function RevenueWidget({
               </Pie>
               <Tooltip
                 cursor={false}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="border border-slate-700 bg-slate-900/90 text-white flex flex-col gap-1 rounded-lg p-2 text-xs shadow-lg backdrop-blur-md">
-                        <span className="text-slate-400 text-[10px] font-semibold">
-                          {payload[0].payload.label}
-                        </span>
-                        <span className="font-bold">
-                          {payload[0].payload.value} tickets
-                        </span>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
+                content={<CustomTooltip />}
               />
             </PieChart>
           </ResponsiveContainer>

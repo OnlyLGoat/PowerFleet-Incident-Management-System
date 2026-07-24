@@ -11,7 +11,7 @@ export interface TechnicianItem {
   isAvailable: boolean;
 }
 
-export const GET = withAuth(async (req: AuthenticatedRequest) => {
+export const GET = withAuth(async (_req: AuthenticatedRequest) => {
   try {
     const techList = await db
       .select({

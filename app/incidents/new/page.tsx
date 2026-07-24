@@ -98,8 +98,8 @@ export default function NewIncidentPage() {
 
   const selectAddress = (result: SearchResult) => {
     setAddress(result.display_name);
-    setLatitude(parseFloat(result.lat));
-    setLongitude(parseFloat(result.lon));
+    setLatitude(Number.parseFloat(result.lat));
+    setLongitude(Number.parseFloat(result.lon));
     setShowDropdown(false);
   };
 

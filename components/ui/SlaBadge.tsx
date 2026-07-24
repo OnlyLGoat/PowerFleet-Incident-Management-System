@@ -9,12 +9,12 @@ export type SlaState =
   | "Breached_Response"
   | "Breached_Resolution"
   | "Breached_Both"
-  | string;
+  | (string & {}); // Fixes union override while allowing generic strings
 
 interface SlaBadgeProps {
-  status?: SlaState;
-  className?: string;
-  showIcon?: boolean;
+  readonly status?: SlaState;
+  readonly className?: string;
+  readonly showIcon?: boolean;
 }
 
 export function getSlaBadgeConfig(status?: SlaState) {

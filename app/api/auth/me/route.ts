@@ -22,7 +22,7 @@ export async function GET() {
     // Fetch Base User
     const [user] = await db.select().from(users).where(eq(users.id, decoded.userID)).limit(1);
 
-    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+    if (user?.tokenVersion !== decoded.tokenVersion) {
       return NextResponse.json({ success: false, error: "Session invalid or revoked" }, { status: 401 });
     }
 

@@ -18,11 +18,10 @@ export interface BreakdownChannel {
 }
 
 export interface SalesBreakdownWidgetProps {
-  title?: string;
-  subtitle?: string;
-
-  data?: Record<string, unknown>[];
-  channels?: BreakdownChannel[];
+  readonly title?: string;
+  readonly subtitle?: string;
+  readonly data?: Record<string, unknown>[];
+  readonly channels?: BreakdownChannel[];
 }
 
 const defaultData = [
@@ -48,9 +47,9 @@ interface TooltipItem {
 }
 
 interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipItem[];
-  label?: string;
+  readonly active?: boolean;
+  readonly payload?: TooltipItem[];
+  readonly label?: string;
 }
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {

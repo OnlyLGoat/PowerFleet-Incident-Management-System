@@ -11,7 +11,6 @@ import {
   AlertTriangle, 
   CheckSquare, 
   BarChart3, 
-  Settings,
   ChevronDown,
   ChevronUp,
   type LucideIcon

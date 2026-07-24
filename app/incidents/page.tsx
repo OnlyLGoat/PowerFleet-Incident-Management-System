@@ -83,7 +83,7 @@ export default function IncidentsListPage() {
   const [successMap, setSuccessMap] = useState<Record<number, boolean>>({});
 
   // PATCH Method handler for Inline Dropdown Save
-  const handleSaveIncident = async (incidentId: number, currentStatus: string, currentTechName: string) => {
+  const handleSaveIncident = async (incidentId: number, currentStatus: string) => {
     const newStatus = pendingStatus[incidentId] ?? currentStatus;
     const newTechName = pendingTech[incidentId];
 
@@ -213,6 +213,14 @@ export default function IncidentsListPage() {
       default:
         return "text-slate-500 dark:text-slate-400 font-normal";
     }
+  };
+
+  const handleStatusChange = (id: number, val: string) => {
+    setPendingStatus((prev) => ({ ...prev, [id]: val }));
+  };
+
+  const handleTechChange = (id: number, val: string) => {
+    setPendingTech((prev) => ({ ...prev, [id]: val }));
   };
 
   return (
@@ -425,9 +433,7 @@ export default function IncidentsListPage() {
                             <div className="flex items-center gap-1.5">
                               <select
                                 value={pendingStatus[item.id] ?? item.status}
-                                onChange={(e) =>
-                                  setPendingStatus((prev) => ({ ...prev, [item.id]: e.target.value }))
-                                }
+                                onChange={(e) => handleStatusChange(item.id, e.target.value)}
                                 className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-28"
                               >
                                 <option value="New">New</option>
@@ -443,7 +449,7 @@ export default function IncidentsListPage() {
                                 <button
                                   type="button"
                                   disabled={savingMap[item.id]}
-                                  onClick={() => handleSaveIncident(item.id, item.status, item.assignedTo?.internalUser?.user?.name || "")}
+                                  onClick={() => handleSaveIncident(item.id, item.status)}
                                   className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center justify-center"
                                   title="Save Status Change"
                                 >
@@ -466,14 +472,12 @@ export default function IncidentsListPage() {
 
                         <td className="py-3.5 px-4">
                           {isClient ? (
-                            <span className="text-slate-600 dark:text-slate-400 font-medium text-[11px]">{item.assignedTo?.internalUser?.user?.name || "Unassigned"}</span>
+                            <span className="text-slate-400 italic font-medium text-[11px]">N/A</span>
                           ) : role === "Admin" || role === "Support Manager" ? (
                             <div className="flex items-center gap-1.5">
                               <select
                                 value={pendingTech[item.id] ?? (item.assignedTo?.internalUser?.user?.name || "")}
-                                onChange={(e) =>
-                                  setPendingTech((prev) => ({ ...prev, [item.id]: e.target.value }))
-                                }
+                                onChange={(e) => handleTechChange(item.id, e.target.value)}
                                 className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-36"
                               >
                                 <option value="">Unassigned</option>
@@ -488,7 +492,7 @@ export default function IncidentsListPage() {
                                 <button
                                   type="button"
                                   disabled={savingMap[item.id]}
-                                  onClick={() => handleSaveIncident(item.id, item.status, item.assignedTo?.internalUser?.user?.name || "")}
+                                  onClick={() => handleSaveIncident(item.id, item.status)}
                                   className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center justify-center"
                                   title="Save Technician Assignment"
                                 >

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,10 +10,8 @@ import {
   ArrowLeft, 
   MessageSquare, 
   Lock, 
-  Check, 
   AlertCircle, 
   Send, 
-  Pin, 
   User, 
   ShieldCheck, 
   Truck, 
@@ -22,7 +20,6 @@ import {
   Tag, 
   FileText,
   Loader2,
-  Building2,
   ChevronRight,
   ChevronLeft,
   Plus
@@ -95,8 +92,7 @@ interface IncidentDetail {
 
 export default function IncidentDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
 
   const rawId = (params.id as string || "").replace(/^INC-/i, "");
   const incidentId = rawId;
@@ -117,7 +113,6 @@ export default function IncidentDetailPage() {
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
   const [newNote, setNewNote] = useState("");
-  const [notePriority, setNotePriority] = useState<"Low" | "Medium" | "High" | "Critical">("Medium");
   const [noteVisibility, setNoteVisibility] = useState<"Public" | "Private">("Private");
   const [isPinned, setIsPinned] = useState(false);
   const [postingNote, setPostingNote] = useState(false);
@@ -205,7 +200,7 @@ export default function IncidentDetailPage() {
       await axios.post(`/api/incidents/${incidentId}/notes`, {
         title: noteTitle.trim() || "Internal Note",
         body: newNote.trim(),
-        priority: notePriority,
+        priority: "Medium",
         visibility: noteVisibility,
         isPinned,
       });

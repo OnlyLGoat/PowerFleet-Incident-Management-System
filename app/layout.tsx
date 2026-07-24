@@ -21,9 +21,7 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider
-          attribute="class"
           defaultTheme="system"
-          enableSystem
           disableTransitionOnChange
         >
           <SmoothScroll>

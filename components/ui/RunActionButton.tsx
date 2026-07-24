@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 export type RunActionState = "idle" | "loading" | "success" | "error";
 
 interface RunActionButtonProps extends HTMLMotionProps<"button"> {
-  status: RunActionState;
-  idleText?: string;
-  successText?: string;
-  errorText?: string;
-  onRun?: () => void;
-  className?: string;
+  readonly status: RunActionState;
+  readonly idleText?: string;
+  readonly successText?: string;
+  readonly errorText?: string;
+  readonly onRun?: () => void;
+  readonly className?: string;
 }
 
 export default function RunActionButton({
@@ -27,6 +27,8 @@ export default function RunActionButton({
   type = "submit",
   ...props
 }: RunActionButtonProps) {
+  const bgColor = status === "error" ? "#ef4444" : "#10b981";
+
   return (
     <motion.button
       type={type}
@@ -35,12 +37,7 @@ export default function RunActionButton({
       initial={false}
       animate={{
         width: status === "idle" || status === "error" ? "100%" : 140,
-        backgroundColor:
-          status === "success"
-            ? "#10b981" // emerald-500
-            : status === "error"
-            ? "#ef4444" // red-500
-            : "#10b981", // emerald-500 for idle/loading
+        backgroundColor: bgColor,
       }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className={cn(

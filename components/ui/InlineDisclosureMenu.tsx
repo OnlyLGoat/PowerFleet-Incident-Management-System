@@ -13,7 +13,7 @@ export interface MenuAction {
 }
 
 interface InlineDisclosureMenuProps {
-  actions: MenuAction[];
+  readonly actions: MenuAction[];
 }
 
 export default function InlineDisclosureMenu({ actions }: InlineDisclosureMenuProps) {
@@ -94,9 +94,9 @@ export default function InlineDisclosureMenu({ actions }: InlineDisclosureMenuPr
             )}
           >
             <div className="flex flex-col gap-0.5">
-              {actions.map((action, idx) => (
+              {actions.map((action) => (
                 <button
-                  key={idx}
+                  key={action.label}
                   type="button"
                   onClick={() => {
                     action.onClick();

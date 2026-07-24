@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Droplet, Building2, TrendingUp, Clock } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, useInView } from 'framer-motion';
 
-function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number | string, suffix?: string, prefix?: string }) {
+function AnimatedCounter({ value, suffix = "", prefix = "" }: { readonly value: number | string, readonly suffix?: string, readonly prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
   

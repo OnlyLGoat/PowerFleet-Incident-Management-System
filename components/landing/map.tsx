@@ -7,7 +7,7 @@ import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-export default function Map() {
+export default function WorldMap() {
   return (
     <div className="w-full h-full opacity-60 text-neutral-500 flex items-center justify-center -mt-6">
       <ComposableMap 

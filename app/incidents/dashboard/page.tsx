@@ -13,11 +13,7 @@ import {
   Loader2,
   ShieldCheck,
   Lock,
-  Eye,
-  Edit,
-  MessageSquare,
-  CheckSquare,
-  Trash2
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { 

@@ -43,15 +43,15 @@ export function AuthProvider({ children, initialUser = null }: Readonly<AuthProv
             }
     };
 
+    const value = React.useMemo(() => ({
+        user,
+        role: user?.role ?? null,
+        isLoading,
+        refreshUser,
+    }), [user, isLoading]);
+
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                role: user?.role ?? null,
-                isLoading,
-                refreshUser,
-                }}
-            >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

@@ -19,12 +19,10 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "powerfleet-ui-theme",
 }: {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-  attribute?: string;
-  enableSystem?: boolean;
-  disableTransitionOnChange?: boolean;
+  readonly children: React.ReactNode;
+  readonly defaultTheme?: Theme;
+  readonly storageKey?: string;
+  readonly disableTransitionOnChange?: boolean;
 }) {
   const [theme, setThemeState] = React.useState<Theme>(() => {
     if (typeof window !== "undefined") {
@@ -56,8 +54,10 @@ export function ThemeProvider({
     [storageKey]
   );
 
+  const value = React.useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
+
   return (
-    <ThemeProviderContext.Provider value={{ theme, setTheme }}>
+    <ThemeProviderContext.Provider value={value}>
       {children}
     </ThemeProviderContext.Provider>
   );

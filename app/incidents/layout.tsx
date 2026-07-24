@@ -23,7 +23,7 @@ async function getSessionUser(): Promise<FullUserProfile | null> {
     };
 
     const [user] = await db.select().from(users).where(eq(users.id, decoded.userID)).limit(1);
-    if (!user || user.tokenVersion !== decoded.tokenVersion) return null;
+    if (user?.tokenVersion !== decoded.tokenVersion) return null;
 
     return await getUserFullProfile(user.id, user.name, user.email);
   } catch {
@@ -34,7 +34,7 @@ async function getSessionUser(): Promise<FullUserProfile | null> {
 export default async function IncidentsLayout({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }) {
   const user = await getSessionUser();
 

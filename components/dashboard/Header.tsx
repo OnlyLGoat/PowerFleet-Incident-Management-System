@@ -45,13 +45,7 @@ export default function Header({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  // Generate User Initials (e.g. "Med El Anani" -> "MA")
-  const getInitials = (name?: string) => {
-    if (!name) return "PF";
-    const parts = name.trim().split(" ");
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
+
 
   // Handle Logout Execution
   const handleLogout = async () => {

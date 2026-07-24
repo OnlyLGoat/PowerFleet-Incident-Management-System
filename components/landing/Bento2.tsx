@@ -3,10 +3,10 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import Map from './map';
+import WorldMap from './map';
 
 interface Bento2Props {
-  className?: string;
+  readonly className?: string;
 }
 
 const bentoCardClass = cn(
@@ -186,9 +186,9 @@ export default function Bento2({ className }: Bento2Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      {[...Array(14)].map((_, j) => (
+                      {[...new Array(14)].map((_, j) => (
                         <motion.div
-                          key={j}
+                          key={`tick-${j}`}
                           className="bg-emerald-500 h-2 flex-1 rounded-[1px]"
                           initial={{ opacity: 0.2 }}
                           animate={
@@ -332,7 +332,7 @@ export default function Bento2({ className }: Bento2Props) {
               }}
             >
               <div className="w-[140%] min-w-[800px] mt-16">
-                <Map />
+                <WorldMap />
               </div>
             </div>
             
@@ -351,9 +351,9 @@ export default function Bento2({ className }: Bento2Props) {
                  { src: 'https://assets.watermelon.sh/wm_olivia.png', name: 'Olivia', top: '35%', left: '35%', delay: 0.4 },
                  { src: 'https://assets.watermelon.sh/wm_josh.png', name: 'Josh', top: '5%', left: '60%', delay: 0.2 },
                  { src: 'https://assets.watermelon.sh/wm_emma.png', name: 'Emma', top: '25%', left: '85%', delay: 0.6 },
-               ].map((avatar, idx) => (
+               ].map((avatar) => (
                  <motion.div
-                   key={idx}
+                   key={avatar.name}
                    className="absolute flex flex-col items-center"
                    style={{ top: avatar.top, left: avatar.left }}
                    initial={{ y: 0 }}
