@@ -26,6 +26,13 @@ export interface AuthProviderProps {
 export function AuthProvider({ children, initialUser = null }: Readonly<AuthProviderProps>) {
     const [user, setUser] = useState<FullUserProfile | null>(initialUser);
     const [isLoading, setIsLoading] = useState<boolean>(!initialUser);
+    const [prevInitialUser, setPrevInitialUser] = useState<FullUserProfile | null>(initialUser);
+
+    if (initialUser !== prevInitialUser) {
+        setPrevInitialUser(initialUser);
+        setUser(initialUser);
+        setIsLoading(!initialUser);
+    }
 
     const refreshUser = async () => {
     try {

@@ -26,6 +26,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
+import TechActionPanel from "@/components/ui/TechActionPanel";
+import Image from "next/image";
+import { toast } from "sonner";
+
+interface AttachmentItem {
+  id: number;
+  filename: string;
+  fileUrl: string;
+  fileType: string;
+  createdAt: string;
+}
 
 interface CommentUser {
   id: number;
@@ -88,6 +99,7 @@ interface IncidentDetail {
   vehicle?: VehicleInfo;
   comments: CommentItem[];
   internalNotes?: InternalNoteItem[];
+  attachments: AttachmentItem[];
 }
 
 export default function IncidentDetailPage() {
@@ -96,8 +108,7 @@ export default function IncidentDetailPage() {
 
   const rawId = (params.id as string || "").replace(/^INC-/i, "");
   const incidentId = rawId;
-  const isClient = role === "ClientUser";
-  const isInternal = !isClient;
+  const isInternal = role === "Admin" || role === "Support Manager" || role === "Technician";
 
   // Incident State
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
@@ -181,6 +192,18 @@ export default function IncidentDetailPage() {
       });
       setNewComment("");
       setShowCommentForm(false);
+      
+      toast.success('Comment Posted', {
+        description: 'Your public comment has been successfully added.',
+        style: {
+          '--normal-bg': 'color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))',
+          '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          borderRadius: '16px',
+        } as React.CSSProperties,
+        className: 'shadow-xl shadow-emerald-500/5',
+      });
+      
       await fetchIncidentDetails();
     } catch (err) {
       console.error("Failed to post comment:", err);
@@ -209,6 +232,18 @@ export default function IncidentDetailPage() {
       setIsPinned(false);
       setShowNoteForm(false);
       setNotePageIndex(0);
+      
+      toast.success('Internal Note Saved', {
+        description: 'Your internal note has been securely logged.',
+        style: {
+          '--normal-bg': 'color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))',
+          '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          borderRadius: '16px',
+        } as React.CSSProperties,
+        className: 'shadow-xl shadow-emerald-500/5',
+      });
+      
       await fetchIncidentDetails();
     } catch (err) {
       console.error("Failed to post internal note:", err);
@@ -344,6 +379,50 @@ export default function IncidentDetailPage() {
                 {incident.description}
               </div>
             </div>
+
+            {/* Tech Action Panel (Rendered only for non-clients, e.g. Technicians/Admins) */}
+            {isInternal && (
+              <TechActionPanel 
+                incidentId={Number(incidentId)} 
+                currentStatus={incident.status} 
+                onUpdate={fetchIncidentDetails} 
+              />
+            )}
+
+            {/* Attachments Section */}
+            {incident.attachments && incident.attachments.length > 0 && (
+              <div className="space-y-3 border-t border-slate-100 dark:border-slate-800/80 pt-6">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <FileText className="size-3.5" /> Attachments ({incident.attachments.length})
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {incident.attachments.map(att => (
+                    <div key={att.id} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                      {att.fileType.startsWith('image/') ? (
+                        <a href={att.fileUrl} target="_blank" rel="noreferrer">
+                          <Image 
+                            src={att.fileUrl} 
+                            alt={att.filename} 
+                            fill 
+                            className="object-cover transition-transform group-hover:scale-105"
+                          />
+                        </a>
+                      ) : (
+                        <a 
+                          href={att.fileUrl} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex flex-col items-center justify-center h-full w-full p-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-center"
+                        >
+                          <FileText className="size-8 text-slate-400 mb-2" />
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 truncate w-full px-1">{att.filename}</span>
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Action Bar (Add Comment) */}
             <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800/80 flex-wrap">

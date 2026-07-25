@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { withAuth, AuthenticatedRequest } from "@/middleware/auth";
+import { withAuth } from "@/middleware/auth";
+
+export const dynamic = "force-dynamic";
 import { db } from "@/db";
 import { technicians, internal_users, users } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -11,7 +13,7 @@ export interface TechnicianItem {
   isAvailable: boolean;
 }
 
-export const GET = withAuth(async (_req: AuthenticatedRequest) => {
+export const GET = withAuth(async () => {
   try {
     const techList = await db
       .select({
