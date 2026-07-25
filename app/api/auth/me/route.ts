@@ -1,6 +1,8 @@
 // app/api/auth/me/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+
+export const dynamic = "force-dynamic";
 import jwt from "jsonwebtoken";
 import { db } from "@/db";
 import { users } from "@/db/schema";

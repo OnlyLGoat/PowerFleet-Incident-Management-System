@@ -6,6 +6,7 @@ import axios from "axios";
 import { ArrowLeft, Car, AlertTriangle, MapPin, AlignLeft, Info, Search, Check } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 import RunActionButton, { type RunActionState } from "@/components/ui/RunActionButton";
 
 // Incident Types
@@ -123,6 +124,17 @@ export default function NewIncidentPage() {
 
       setBtnState("success");
       setTimeout(() => {
+        toast.success('Incident Created Successfully', {
+          description: 'Your ticket has been recorded and is now in the dashboard.',
+          style: {
+            '--normal-bg': 'color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))',
+            '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
+            '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))',
+            borderRadius: '16px',
+          } as React.CSSProperties,
+          className: 'shadow-xl shadow-emerald-500/5',
+        });
+        
         router.push("/incidents/dashboard");
       }, 1500);
     } catch (err: unknown) {

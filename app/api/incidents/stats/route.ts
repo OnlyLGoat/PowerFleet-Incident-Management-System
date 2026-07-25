@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, AuthenticatedRequest } from "@/middleware/auth";
+
+export const dynamic = "force-dynamic";
 import { db } from "@/db";
 import { incidents, clients, vehicles, security_audit_events } from "@/db/schema";
 import { eq, ne, or, inArray, count, isNull, and, desc } from "drizzle-orm";

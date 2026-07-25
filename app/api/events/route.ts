@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, AuthenticatedRequest } from "@/middleware/auth";
+
+export const dynamic = "force-dynamic";
 import { EventService } from "@/lib/services/event.service";
 import { withAudit } from "@/lib/utils/audit";
 
