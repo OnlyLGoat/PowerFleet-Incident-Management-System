@@ -7,6 +7,61 @@ import { incidents, clients, vehicles, security_audit_events } from "@/db/schema
 import { eq, ne, or, inArray, count, isNull, and, desc } from "drizzle-orm";
 import { withAudit } from "@/lib/utils/audit";
 
+function createZeroStatsResponse() {
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return NextResponse.json({
+    total: 0,
+    active: 0,
+    resolved: 0,
+    vehiclesCount: 0,
+    slaWarnings: 0,
+    slaBreached: 0,
+    categoryDistribution: [],
+    dailySlaBreakdown: days.map(day => ({ day, healthy: 0, warning: 0, breached: 0 })),
+    dailyCategoryBreakdown: days.map(day => ({ day, gps: 0, vehicle: 0, fuel: 0, accident: 0 })),
+    dailyStatusBreakdown: days.map(day => ({ day, open: 0, inProgress: 0, resolved: 0 })),
+    recentIncidents: [],
+    recentAuditLogs: [],
+  });
+}
+
+function processSlaBreakdown(sla: string | null, dayName: string, map: Record<string, { healthy: number; warning: number; breached: number }>) {
+  const status = sla || "Healthy";
+  if (status.startsWith("Breached")) {
+    map[dayName].breached += 1;
+  } else if (status.startsWith("Warning")) {
+    map[dayName].warning += 1;
+  } else {
+    map[dayName].healthy += 1;
+  }
+}
+
+function processCategoryBreakdown(typeStr: string | null, dayName: string, map: Record<string, { gps: number; vehicle: number; fuel: number; accident: number }>) {
+  const type = (typeStr || "").toLowerCase();
+  if (type.includes("gps")) {
+    map[dayName].gps += 1;
+  } else if (type.includes("vehicle") || type.includes("defect") || type.includes("engine")) {
+    map[dayName].vehicle += 1;
+  } else if (type.includes("fuel")) {
+    map[dayName].fuel += 1;
+  } else if (type.includes("accident") || type.includes("crash")) {
+    map[dayName].accident += 1;
+  } else {
+    map[dayName].gps += 1;
+  }
+}
+
+function processStatusBreakdown(st: string | null, dayName: string, map: Record<string, { open: number; inProgress: number; resolved: number }>) {
+  const status = st || "New";
+  if (status === "Resolved" || status === "Closed") {
+    map[dayName].resolved += 1;
+  } else if (status === "In Progress" || status === "Waiting Client" || status === "Waiting Technician") {
+    map[dayName].inProgress += 1;
+  } else {
+    map[dayName].open += 1;
+  }
+}
+
 export const GET = withAuth(async (req: AuthenticatedRequest) => {
   return withAudit(req, 'GET /incidents/stats', async () => {
     const currentUser = req.user!;
@@ -32,44 +87,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
 
         // If client has no vehicles, return zeroed metrics immediately
         if (clientVehicleIds.length === 0) {
-          return NextResponse.json({
-            total: 0,
-            active: 0,
-            resolved: 0,
-            vehiclesCount: 0,
-            slaWarnings: 0,
-            slaBreached: 0,
-            categoryDistribution: [],
-            dailySlaBreakdown: [
-              { day: "Mon", healthy: 0, warning: 0, breached: 0 },
-              { day: "Tue", healthy: 0, warning: 0, breached: 0 },
-              { day: "Wed", healthy: 0, warning: 0, breached: 0 },
-              { day: "Thu", healthy: 0, warning: 0, breached: 0 },
-              { day: "Fri", healthy: 0, warning: 0, breached: 0 },
-              { day: "Sat", healthy: 0, warning: 0, breached: 0 },
-              { day: "Sun", healthy: 0, warning: 0, breached: 0 },
-            ],
-            dailyCategoryBreakdown: [
-              { day: "Mon", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Tue", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Wed", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Thu", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Fri", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Sat", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-              { day: "Sun", gps: 0, vehicle: 0, fuel: 0, accident: 0 },
-            ],
-            dailyStatusBreakdown: [
-              { day: "Mon", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Tue", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Wed", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Thu", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Fri", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Sat", open: 0, inProgress: 0, resolved: 0 },
-              { day: "Sun", open: 0, inProgress: 0, resolved: 0 },
-            ],
-            recentIncidents: [],
-            recentAuditLogs: [],
-          });
+          return createZeroStatsResponse();
         }
       }
 
@@ -185,39 +203,9 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
         const dayName = daysOfWeek[d.getDay()];
         if (!dailySlaMap[dayName]) return;
 
-        // SLA breakdown
-        const sla = inc.slaStatus || "Healthy";
-        if (sla.startsWith("Breached")) {
-          dailySlaMap[dayName].breached += 1;
-        } else if (sla.startsWith("Warning")) {
-          dailySlaMap[dayName].warning += 1;
-        } else {
-          dailySlaMap[dayName].healthy += 1;
-        }
-
-        // Category breakdown
-        const type = (inc.type || "").toLowerCase();
-        if (type.includes("gps")) {
-          dailyCatMap[dayName].gps += 1;
-        } else if (type.includes("vehicle") || type.includes("defect") || type.includes("engine")) {
-          dailyCatMap[dayName].vehicle += 1;
-        } else if (type.includes("fuel")) {
-          dailyCatMap[dayName].fuel += 1;
-        } else if (type.includes("accident") || type.includes("crash")) {
-          dailyCatMap[dayName].accident += 1;
-        } else {
-          dailyCatMap[dayName].gps += 1;
-        }
-
-        // Ticket Status breakdown
-        const st = inc.status || "New";
-        if (st === "Resolved" || st === "Closed") {
-          dailyStatusMap[dayName].resolved += 1;
-        } else if (st === "In Progress" || st === "Waiting Client" || st === "Waiting Technician") {
-          dailyStatusMap[dayName].inProgress += 1;
-        } else {
-          dailyStatusMap[dayName].open += 1;
-        }
+        processSlaBreakdown(inc.slaStatus, dayName, dailySlaMap);
+        processCategoryBreakdown(inc.type, dayName, dailyCatMap);
+        processStatusBreakdown(inc.status, dayName, dailyStatusMap);
       });
 
       const dailySlaBreakdown = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({
@@ -273,6 +261,75 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
             .limit(4)
         : [];
 
+      // 9. Top Impacted Clients Summary (For Internal Users: Support Manager, Admin, Technician)
+      let topImpactedClients: Array<{
+        clientId: number;
+        companyName: string;
+        contactName: string;
+        openTickets: number;
+        totalTickets: number;
+        impactLevel: "Low" | "Medium" | "High";
+        latestIncidentId: number | null;
+      }> = [];
+
+      if (!isClient) {
+        const clientList = await db.query.clients.findMany({
+          with: {
+            user: { columns: { name: true } }
+          }
+        });
+
+        for (const c of clientList) {
+          const clientVehicles = await db
+            .select({ id: vehicles.id })
+            .from(vehicles)
+            .where(and(eq(vehicles.clientId, c.userId), isNull(vehicles.deletedAt)));
+          
+          const vehicleIds = clientVehicles.map(v => v.id);
+          if (vehicleIds.length === 0) continue;
+
+          const clientIncidents = await db.query.incidents.findMany({
+            where: inArray(incidents.vehicleId, vehicleIds),
+            orderBy: [desc(incidents.createdAt)]
+          });
+
+          const totalCount = clientIncidents.length;
+          const openIncidents = clientIncidents.filter(i => 
+            i.status !== "Resolved" && i.status !== "Closed"
+          );
+          const openCount = openIncidents.length;
+
+          if (totalCount === 0) continue;
+
+          let impactLevel: "Low" | "Medium" | "High" = "Low";
+          const hasCritical = openIncidents.some(i => i.priority === "Critical");
+          const hasHigh = openIncidents.some(i => i.priority === "High");
+
+          if (openCount >= 3 || hasCritical) {
+            impactLevel = "High";
+          } else if (openCount === 2 || hasHigh) {
+            impactLevel = "Medium";
+          }
+
+          topImpactedClients.push({
+            clientId: c.userId,
+            companyName: c.companyName,
+            contactName: c.user?.name || "Client",
+            openTickets: openCount,
+            totalTickets: totalCount,
+            impactLevel: impactLevel,
+            latestIncidentId: clientIncidents[0]?.id || null
+          });
+        }
+
+        topImpactedClients.sort((a, b) => {
+          const order = { High: 3, Medium: 2, Low: 1 };
+          return order[b.impactLevel] - order[a.impactLevel];
+        });
+
+        topImpactedClients = topImpactedClients.slice(0, 4);
+      }
+
       return NextResponse.json({
         total: totalResult?.total ?? 0,
         active: activeResult?.active ?? 0,
@@ -306,6 +363,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
           ipAddress: log.ipAddress,
           createdAt: log.createdAt,
         })),
+        topImpactedClients,
       });
     } catch (error) {
       console.error("Failed to compute dashboard stats:", error);

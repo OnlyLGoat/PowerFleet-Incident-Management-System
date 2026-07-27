@@ -11,9 +11,9 @@ import {
   ShieldAlert,
   Truck,
   Loader2,
-  ShieldCheck,
-  Lock,
-  Eye
+  Eye,
+  Building2,
+  ArrowRight
 } from "lucide-react";
 import Link from "next/link";
 import { 
@@ -61,6 +61,15 @@ export interface DashboardStats {
     assignedTo?: string | null;
   }>;
   recentAuditLogs?: AuditLogItem[];
+  topImpactedClients?: Array<{
+    clientId: number;
+    companyName: string;
+    contactName: string;
+    openTickets: number;
+    totalTickets: number;
+    impactLevel: "Low" | "Medium" | "High";
+    latestIncidentId: number | null;
+  }>;
 }
 
 const DEFAULT_CATEGORIES = ["GPS Device", "Vehicle", "Fuel", "Accident", "Maintenance"];
@@ -71,10 +80,15 @@ const TICKET_STATUS_CHANNELS = [
   { key: "resolved", label: "Resolved", color: "#10b981" },
 ];
 
+const getRiskBadgeClass = (isHigh: boolean, isMedium: boolean) => {
+  if (isHigh) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+  if (isMedium) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+  return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+};
+
 export default function IncidentsDashboardPage() {
   const { user, role } = useAuth();
   const isClient = role === "ClientUser";
-  const isAdmin = role === "Admin";
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -300,59 +314,71 @@ export default function IncidentsDashboardPage() {
             </div>
           </div>
 
-          {/* Bottom Left: Security Audit History (Only rendered for SystemAdmin & Admin) */}
-          {isAdmin && (
+          {/* Bottom Left: Client Fleet Operational Impact Monitor (For Support Manager & Admin / Non-clients) */}
+          {!isClient && (
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-                    <ShieldCheck className="size-4" />
+                    <Activity className="size-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">Security Audit Log</h2>
-                    <p className="text-[11px] text-slate-400">Real-time system security & authorization activity</p>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">Client Operational Impact Monitor</h2>
+                    <p className="text-[11px] text-slate-400">Live fleet risk assessment & ticket propagation overview</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
-                  <Lock className="size-3" /> Live Audit
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1.5 uppercase tracking-wider">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Impact
                 </span>
               </div>
 
               {loading ? (
                 <div className="py-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
                   <Loader2 className="size-4 animate-spin text-emerald-500" />
-                  <span>Fetching audit logs...</span>
+                  <span>Calculating client fleet impact levels...</span>
                 </div>
-              ) : (stats?.recentAuditLogs?.length ?? 0) === 0 ? (
+              ) : (stats?.topImpactedClients?.length ?? 0) === 0 ? (
                 <div className="py-6 text-center text-slate-400 text-xs">
-                  No security audit events recorded yet.
+                  No active client fleet risks detected. All client accounts healthy!
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-                  {stats?.recentAuditLogs?.map((log) => {
-                    const isSuccess = log.statusCode >= 200 && log.statusCode < 300;
+                  {stats?.topImpactedClients?.map((item) => {
+                    const isHigh = item.impactLevel === "High";
+                    const isMedium = item.impactLevel === "Medium";
                     return (
-                      <div key={log.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-lg transition-colors">
+                      <div key={item.clientId} className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-xl transition-colors">
                         <div className="flex items-center gap-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                              isSuccess
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                            }`}
-                          >
-                            {log.statusCode}
-                          </span>
+                          <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 shrink-0">
+                            <Building2 className="size-4" />
+                          </div>
                           <div>
-                            <p className="font-semibold text-slate-900 dark:text-white font-mono text-[11px]">
-                              {log.attemptedEndpoint}
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-slate-900 dark:text-white text-xs">
+                                {item.companyName}
+                              </p>
+                              <span className="text-[10px] text-slate-400 font-normal">({item.contactName})</span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              <span className="font-semibold text-rose-500">{item.openTickets} open tickets</span> out of {item.totalTickets} total
                             </p>
-                            <p className="text-[10px] text-slate-400">{log.message}</p>
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <span className="text-[10px] font-mono text-slate-400">{log.ipAddress || "127.0.0.1"}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getRiskBadgeClass(isHigh, isMedium)}`}>
+                            {item.impactLevel} Risk
+                          </span>
+
+                          {item.latestIncidentId && (
+                            <Link
+                              href={`/incidents/${item.latestIncidentId}`}
+                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-white text-slate-500 dark:text-slate-400 transition-colors"
+                              title="View Client Impact Map"
+                            >
+                              <ArrowRight className="size-3.5" />
+                            </Link>
+                          )}
                         </div>
                       </div>
                     );

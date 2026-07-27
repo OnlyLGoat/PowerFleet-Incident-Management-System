@@ -13,6 +13,8 @@ describe("SLA Calculation Service Logic", () => {
     let incidentId: number;
 
     beforeAll(async () => {
+        process.env.CRON_SLA_SECRET = "test_cron_secret_key";
+
         // 1. Create client user & vehicle
         const [client] = await db.insert(users).values({
             name: "SLA Client",

@@ -49,4 +49,4 @@ export const POST = withAuth(async (req: AuthenticatedRequest) => {
             throw error;
         }
     });
-}, "ClientUser");
+});

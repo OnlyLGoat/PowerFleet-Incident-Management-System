@@ -5,6 +5,7 @@ import { verifyAdminAccess } from "@/lib/services/role";
 import { auditLogChanges } from "./audit";
 import { resolveUserRole } from "./role";
 import { SlaService, SlaPriority } from "./sla.service";
+import { ImpactService } from "./impact.service";
 import { GetIncidentsFilters } from "./validations/incident";
 
 interface StatusError extends Error {
@@ -147,6 +148,7 @@ export class IncidentService {
                 newRecord: newIncident
             });
             await SlaService.calculateSLA(incidentId);
+            await ImpactService.calculateAndSaveImpact(incidentId);
         }
 
         const refreshedIncident = await db.query.incidents.findFirst({

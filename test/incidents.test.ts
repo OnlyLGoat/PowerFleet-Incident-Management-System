@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import { GET as listIncidentsGET, POST as createIncidentPOST } from "@/app/api/incidents/route";
 import { PATCH as updateIncidentPATCH } from "@/app/api/incidents/[id]/route";
 import { db } from "@/db";
-import { users, internal_users, admins, clients, vehicles, incidents, technicians, support_managers } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, internal_users, admins, clients, vehicles, incidents, technicians, support_managers, impact_links, incident_events } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 describe("Incidents API Endpoints", () => {
     let adminUser: { id: number } | undefined, adminToken: string;
@@ -20,6 +20,29 @@ describe("Incidents API Endpoints", () => {
     let createdIncidentId: number;
 
     beforeAll(async () => {
+        // Clean up any stale test accounts from interrupted runs
+        const testEmails = [
+            "admin_test_incidents@example.com",
+            "manager_test_incidents@example.com",
+            "tech_test_incidents@example.com",
+            "inactive_test_incidents@example.com",
+            "client1_test_incidents@example.com",
+            "client2_test_incidents@example.com"
+        ];
+        const existingUsers = await db.query.users.findMany({
+            where: inArray(users.email, testEmails)
+        });
+        if (existingUsers.length > 0) {
+            const userIds = existingUsers.map(u => u.id);
+            await db.delete(impact_links);
+            await db.delete(incident_events);
+            await db.delete(incidents).where(inArray(incidents.clientId, userIds));
+            await db.delete(vehicles).where(inArray(vehicles.clientId, userIds));
+            for (const u of existingUsers) {
+                await db.delete(users).where(eq(users.id, u.id));
+            }
+        }
+
         // 1. Create Admin
         const [admin] = await db.insert(users).values({
             name: "Admin", email: "admin_test_incidents@example.com", password: "HashedPassword123!"
@@ -108,6 +131,8 @@ describe("Incidents API Endpoints", () => {
     afterAll(async () => {
         // Cascade delete on users cleans up profiles
         if (createdIncidentId) {
+            await db.delete(impact_links).where(eq(impact_links.incidentId, createdIncidentId));
+            await db.delete(incident_events).where(eq(incident_events.incidentId, createdIncidentId));
             await db.delete(incidents).where(eq(incidents.id, createdIncidentId));
         }
         if (vehicle1) await db.delete(vehicles).where(eq(vehicles.id, vehicle1.id));
