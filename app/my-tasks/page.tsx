@@ -587,13 +587,14 @@ export default function MyTasksPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label htmlFor="assign-technician-select" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Select Available Technician:
               </label>
               {availableTechnicians.length === 0 ? (
                 <p className="text-xs text-rose-500 font-medium">No available technicians online currently.</p>
               ) : (
                 <select
+                  id="assign-technician-select"
                   value={assigningTechId ?? ""}
                   onChange={(e) => setAssigningTechId(Number(e.target.value))}
                   className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"

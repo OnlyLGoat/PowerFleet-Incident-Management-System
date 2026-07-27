@@ -80,6 +80,12 @@ const TICKET_STATUS_CHANNELS = [
   { key: "resolved", label: "Resolved", color: "#10b981" },
 ];
 
+const getRiskBadgeClass = (isHigh: boolean, isMedium: boolean) => {
+  if (isHigh) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+  if (isMedium) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+  return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+};
+
 export default function IncidentsDashboardPage() {
   const { user, role } = useAuth();
   const isClient = role === "ClientUser";
@@ -360,15 +366,7 @@ export default function IncidentsDashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                              isHigh
-                                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
-                                : isMedium
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                            }`}
-                          >
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getRiskBadgeClass(isHigh, isMedium)}`}>
                             {item.impactLevel} Risk
                           </span>
 

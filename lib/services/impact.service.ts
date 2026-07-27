@@ -60,7 +60,7 @@ export class ImpactService {
       }
     });
 
-    if (!incident || !incident.vehicle || !incident.client) {
+    if (!incident?.vehicle || !incident?.client) {
       return null;
     }
 
@@ -77,8 +77,8 @@ export class ImpactService {
     const totalTickets = clientIncidents.length;
     
     // Active / Open statuses
-    const openStatuses = ["New", "Open", "In Progress", "Waiting Client", "Waiting Technician"];
-    const openIncidents = clientIncidents.filter(inc => openStatuses.includes(inc.status));
+    const openStatuses = new Set(["New", "Open", "In Progress", "Waiting Client", "Waiting Technician"]);
+    const openIncidents = clientIncidents.filter(inc => openStatuses.has(inc.status));
     const clientOpenTickets = openIncidents.length;
 
     // Status breakdown
@@ -93,7 +93,7 @@ export class ImpactService {
     // - Red (High): >= 3 open tickets OR any open ticket with Critical priority
     // - Orange (Medium): 2 open tickets OR any open ticket with High priority
     // - Green (Low): <= 1 open ticket with Low/Medium priority
-    let impactLevel: ImpactRiskLevel = "Low";
+    let impactLevel: ImpactRiskLevel;
     const hasCritical = openIncidents.some(i => i.priority === "Critical");
     const hasHigh = openIncidents.some(i => i.priority === "High");
 
@@ -112,7 +112,7 @@ export class ImpactService {
       where: eq(impact_links.incidentId, incidentId)
     });
 
-    const dbImpactLevel = impactLevel === "High" ? "High" : impactLevel === "Medium" ? "Medium" : "Low";
+    const dbImpactLevel: "High" | "Medium" | "Low" = impactLevel;
 
     if (existingImpactLink) {
       await db.update(impact_links)

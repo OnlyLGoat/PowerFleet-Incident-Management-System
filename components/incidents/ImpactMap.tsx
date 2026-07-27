@@ -24,7 +24,7 @@ interface ImpactMapProps {
   incidentId: number;
 }
 
-export default function ImpactMap({ incidentId }: ImpactMapProps) {
+export default function ImpactMap({ incidentId }: Readonly<ImpactMapProps>) {
   const [data, setData] = useState<ImpactMapData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

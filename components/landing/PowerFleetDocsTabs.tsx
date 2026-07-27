@@ -51,8 +51,7 @@ export default function PowerFleetDocsTabs() {
     const interval = setInterval(() => {
       setActiveTab((prev) => {
         const currentIndex = documentation.findIndex((item) => item.value === prev);
-        const nextIndex = (currentIndex + 1) % documentation.length;
-        return documentation[nextIndex].value;
+        return documentation[(currentIndex + 1) % documentation.length].value;
       });
     }, 4000);
 
@@ -86,7 +85,7 @@ export default function PowerFleetDocsTabs() {
           <motion.div
             key={activeTab}
             initial={{ width: "0%" }}
-            animate={{ width: isPaused ? "100%" : "100%" }}
+            animate={{ width: "100%" }}
             transition={{ duration: isPaused ? 0 : 4, ease: "linear" }}
             className="h-full bg-emerald-500"
           />

@@ -119,7 +119,7 @@ export default function AuditLogsPage() {
       // Status Filter
       if (statusFilter === "success" && !(log.statusCode >= 200 && log.statusCode < 300)) return false;
       if (statusFilter === "client_error" && !(log.statusCode >= 400 && log.statusCode < 500)) return false;
-      if (statusFilter === "server_error" && !(log.statusCode >= 500)) return false;
+      if (statusFilter === "server_error" && log.statusCode < 500) return false;
 
       // Search Query
       if (searchQuery.trim() !== "") {
@@ -417,11 +417,9 @@ export default function AuditLogsPage() {
                             <span
                               className={cn(
                                 "px-2.5 py-1 rounded-md text-[11px] font-mono font-bold border",
-                                isSuccess
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                  : isClientErr
-                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                isSuccess ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" : "",
+                                isClientErr ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" : "",
+                                !isSuccess && !isClientErr ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" : ""
                               )}
                             >
                               HTTP {log.statusCode}
@@ -519,7 +517,7 @@ export default function AuditLogsPage() {
                               };
                             default:
                               return {
-                                label: type.replace(/_/g, " "),
+                                label: type.replaceAll("_", " "),
                                 className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                               };
                           }
