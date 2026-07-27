@@ -273,6 +273,75 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
             .limit(4)
         : [];
 
+      // 9. Top Impacted Clients Summary (For Internal Users: Support Manager, Admin, Technician)
+      let topImpactedClients: Array<{
+        clientId: number;
+        companyName: string;
+        contactName: string;
+        openTickets: number;
+        totalTickets: number;
+        impactLevel: "Low" | "Medium" | "High";
+        latestIncidentId: number | null;
+      }> = [];
+
+      if (!isClient) {
+        const clientList = await db.query.clients.findMany({
+          with: {
+            user: { columns: { name: true } }
+          }
+        });
+
+        for (const c of clientList) {
+          const clientVehicles = await db
+            .select({ id: vehicles.id })
+            .from(vehicles)
+            .where(and(eq(vehicles.clientId, c.userId), isNull(vehicles.deletedAt)));
+          
+          const vehicleIds = clientVehicles.map(v => v.id);
+          if (vehicleIds.length === 0) continue;
+
+          const clientIncidents = await db.query.incidents.findMany({
+            where: inArray(incidents.vehicleId, vehicleIds),
+            orderBy: [desc(incidents.createdAt)]
+          });
+
+          const totalCount = clientIncidents.length;
+          const openIncidents = clientIncidents.filter(i => 
+            i.status !== "Resolved" && i.status !== "Closed"
+          );
+          const openCount = openIncidents.length;
+
+          if (totalCount === 0) continue;
+
+          let impactLevel: "Low" | "Medium" | "High" = "Low";
+          const hasCritical = openIncidents.some(i => i.priority === "Critical");
+          const hasHigh = openIncidents.some(i => i.priority === "High");
+
+          if (openCount >= 3 || hasCritical) {
+            impactLevel = "High";
+          } else if (openCount === 2 || hasHigh) {
+            impactLevel = "Medium";
+          }
+
+          topImpactedClients.push({
+            clientId: c.userId,
+            companyName: c.companyName,
+            contactName: c.user?.name || "Client",
+            openTickets: openCount,
+            totalTickets: totalCount,
+            impactLevel: impactLevel,
+            latestIncidentId: clientIncidents[0]?.id || null
+          });
+        }
+
+        topImpactedClients.sort((a, b) => {
+          const order = { High: 3, Medium: 2, Low: 1 };
+          return order[b.impactLevel] - order[a.impactLevel];
+        });
+
+        topImpactedClients = topImpactedClients.slice(0, 4);
+      }
+
       return NextResponse.json({
         total: totalResult?.total ?? 0,
         active: activeResult?.active ?? 0,
@@ -306,6 +375,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
           ipAddress: log.ipAddress,
           createdAt: log.createdAt,
         })),
+        topImpactedClients,
       });
     } catch (error) {
       console.error("Failed to compute dashboard stats:", error);

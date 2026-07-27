@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
-  Truck, 
+  ShieldCheck, 
   AlertTriangle, 
   CheckSquare, 
   BarChart3, 
@@ -15,6 +15,8 @@ import {
   ChevronUp,
   type LucideIcon
 } from "lucide-react";
+
+import { useAuth } from "@/app/context/AuthContext";
 
 export interface NavItem {
   id: string;
@@ -33,7 +35,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/incidents/dashboard", icon: LayoutDashboard },
   { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle, badgeCount: 3 },
   { id: "my-tasks", label: "My Tasks", href: "/my-tasks", icon: CheckSquare },
-  { id: "fleet", label: "Vehicles", href: "/vehicles", icon: Truck },
+  { id: "audit-logs", label: "Audit Logs", href: "/audit-logs", icon: ShieldCheck },
   { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
@@ -46,7 +48,20 @@ export default function FloatingDock({
   className,
 }: Readonly<FloatingDockProps>) {
   const pathname = usePathname();
+  const { role } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
+
+  const isInternal = role === "Admin" || role === "Support Manager" || role === "Technician";
+
+  const visibleItems = items.filter((item) => {
+    if (item.id === "audit-logs" && role !== "Admin") {
+      return false;
+    }
+    if (item.id === "my-tasks" && !isInternal) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div
@@ -62,7 +77,7 @@ export default function FloatingDock({
         className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2.5 rounded-full bg-slate-900/90 dark:bg-slate-900/95 border border-slate-800/90 shadow-2xl backdrop-blur-2xl text-slate-400 max-w-[95vw] overflow-x-auto no-scrollbar"
       >
         <AnimatePresence mode="popLayout">
-          {isExpanded && items.map((item) => {
+          {isExpanded && visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== "/incidents" && pathname.startsWith(item.href));
 

@@ -33,4 +33,4 @@ export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { para
 
         return NextResponse.json(events, { status: 200 });
     });
-});
+}, "InternalUser");

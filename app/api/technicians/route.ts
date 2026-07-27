@@ -38,4 +38,4 @@ export const GET = withAuth(async () => {
     console.error("Error fetching technicians:", error);
     return NextResponse.json({ error: "Failed to fetch technicians" }, { status: 500 });
   }
-});
+}, "InternalUser");

@@ -2,6 +2,7 @@
 
 import BentoFeatures from "@/components/auth/BentoFeatures";
 import DiscoverCTA from "@/components/landing/DiscoverCTA";
+import PowerFleetDocsTabs from "@/components/landing/PowerFleetDocsTabs";
 import Navbar from "@/components/landing/Navbar";
 import StatsBlocks from "@/components/landing/StatsBlocks";
 import Footer from "@/components/layout/Footer";
@@ -36,6 +37,13 @@ export default function LandingPage() {
       {/* Discover PowerFleet CTA */}
       <section className="py-32 bg-slate-50 dark:bg-slate-950 overflow-hidden">
         <DiscoverCTA />
+      </section>
+
+      {/* PowerFleet Auto-Scrolling Information & Docs Section */}
+      <section className="pb-32 bg-slate-50 dark:bg-slate-950 overflow-hidden">
+        <RevealSection>
+          <PowerFleetDocsTabs />
+        </RevealSection>
       </section>
 
       {/* Footer */}

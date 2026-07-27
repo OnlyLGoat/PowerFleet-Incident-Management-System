@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
 import TechActionPanel from "@/components/ui/TechActionPanel";
+import ImpactMap from "@/components/incidents/ImpactMap";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -109,6 +110,7 @@ export default function IncidentDetailPage() {
   const rawId = (params.id as string || "").replace(/^INC-/i, "");
   const incidentId = rawId;
   const isInternal = role === "Admin" || role === "Support Manager" || role === "Technician";
+  const canViewImpactMap = role === "Admin" || role === "Support Manager";
 
   // Incident State
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
@@ -281,7 +283,7 @@ export default function IncidentDetailPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-12">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12 w-full">
       {/* Top Header & Breadcrumb Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
@@ -314,6 +316,9 @@ export default function IncidentDetailPage() {
           {incident.slaStatus && <SlaBadge status={incident.slaStatus} />}
         </div>
       </div>
+
+      {/* Impact Map System (Restricted to Admin & Support Manager) */}
+      {canViewImpactMap && <ImpactMap incidentId={Number(incidentId)} />}
 
       {/* Responsive Grid Layout: Left Main Card & Discussion / Right Top-Right Internal Notes Widget */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
