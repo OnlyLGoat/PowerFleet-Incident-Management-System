@@ -27,6 +27,8 @@ import {
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
 import TechActionPanel from "@/components/ui/TechActionPanel";
+import AssignTechnicianPanel from "@/components/incidents/AssignTechnicianPanel";
+import IncidentStatusPriorityPanel from "@/components/incidents/IncidentStatusPriorityPanel";
 import ImpactMap from "@/components/incidents/ImpactMap";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -95,6 +97,7 @@ interface IncidentDetail {
   latitude?: number;
   longitude?: number;
   slaStatus?: string;
+  assignedToId?: number | null;
   createdAt: string;
   updatedAt: string;
   vehicle?: VehicleInfo;
@@ -391,6 +394,25 @@ export default function IncidentDetailPage() {
                 incidentId={Number(incidentId)} 
                 currentStatus={incident.status} 
                 onUpdate={fetchIncidentDetails} 
+              />
+            )}
+
+            {/* Assign Technician Panel (Rendered for Admin & Support Manager right after Tech Controls) */}
+            {canViewImpactMap && (
+              <AssignTechnicianPanel
+                incidentId={Number(incidentId)}
+                currentAssignedId={incident.assignedToId}
+                onUpdate={fetchIncidentDetails}
+              />
+            )}
+
+            {/* Status & Priority Management Panel (Rendered for Admin & Support Manager) */}
+            {canViewImpactMap && (
+              <IncidentStatusPriorityPanel
+                incidentId={Number(incidentId)}
+                currentStatus={incident.status}
+                currentPriority={incident.priority}
+                onUpdate={fetchIncidentDetails}
               />
             )}
 

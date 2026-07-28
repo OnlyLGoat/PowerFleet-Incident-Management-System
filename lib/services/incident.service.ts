@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { incidents, clients, vehicles, internal_users, technicians, support_managers, users } from "@/db/schema";
+import { incidents, clients, vehicles, internal_users, technicians, support_managers, users, incident_internal_notes } from "@/db/schema";
 import { eq, and, isNull, ilike, inArray, gte, lte, SQL } from "drizzle-orm";
 import { verifyAdminAccess } from "@/lib/services/role";
 import { auditLogChanges } from "./audit";
@@ -48,6 +48,7 @@ interface UpdateIncidentInput {
     status?: IncidentStatus;
     assignedToId?: number;
     message?: string;
+    resolutionNote?: string;
 }
 
 interface CurrentUser {
@@ -543,6 +544,18 @@ export class IncidentService {
             .where(eq(incidents.id, incidentId))
             .returning();
 
+        if (data.resolutionNote?.trim()) {
+            await db.insert(incident_internal_notes).values({
+                incidentId,
+                authorId: authenticatedUserId,
+                title: "Resolution Note",
+                body: data.resolutionNote.trim(),
+                priority: "High",
+                visibility: "Public",
+                isPinned: true
+            });
+        }
+
         await auditLogChanges({
             incidentId,
             userId: authenticatedUserId,
@@ -625,6 +638,18 @@ export class IncidentService {
             })
             .where(eq(incidents.id, incidentId))
             .returning();
+
+        if (data.resolutionNote?.trim()) {
+            await db.insert(incident_internal_notes).values({
+                incidentId,
+                authorId: authenticatedUserId,
+                title: "Resolution Note",
+                body: data.resolutionNote.trim(),
+                priority: "High",
+                visibility: "Public",
+                isPinned: true
+            });
+        }
 
         await auditLogChanges({
             incidentId,

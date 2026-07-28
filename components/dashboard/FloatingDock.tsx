@@ -9,7 +9,6 @@ import {
   LayoutDashboard, 
   ShieldCheck, 
   AlertTriangle, 
-  CheckSquare, 
   BarChart3, 
   ChevronDown,
   ChevronUp,
@@ -34,7 +33,6 @@ export interface FloatingDockProps {
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/incidents/dashboard", icon: LayoutDashboard },
   { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle, badgeCount: 3 },
-  { id: "my-tasks", label: "My Tasks", href: "/my-tasks", icon: CheckSquare },
   { id: "audit-logs", label: "Audit Logs", href: "/audit-logs", icon: ShieldCheck },
   { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
@@ -51,13 +49,8 @@ export default function FloatingDock({
   const { role } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const isInternal = role === "Admin" || role === "Support Manager" || role === "Technician";
-
   const visibleItems = items.filter((item) => {
     if (item.id === "audit-logs" && role !== "Admin") {
-      return false;
-    }
-    if (item.id === "my-tasks" && !isInternal) {
       return false;
     }
     return true;

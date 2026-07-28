@@ -4,7 +4,7 @@ import { withAuth, AuthenticatedRequest } from "@/middleware/auth";
 export const dynamic = "force-dynamic";
 import { db } from "@/db";
 import { incidents, clients, vehicles, security_audit_events } from "@/db/schema";
-import { eq, ne, or, inArray, count, isNull, and, desc } from "drizzle-orm";
+import { eq, ne, or, inArray, count, isNull, and, desc, SQL } from "drizzle-orm";
 import { withAudit } from "@/lib/utils/audit";
 
 function createZeroStatsResponse() {
@@ -92,9 +92,13 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
       }
 
       // Base query filter
-      const baseFilter = isClient
+      let baseFilter: SQL | undefined = isClient
         ? inArray(incidents.vehicleId, clientVehicleIds)
         : undefined;
+
+      if (currentUser.role === "Technician") {
+        baseFilter = eq(incidents.assignedToId, currentUser.userId);
+      }
 
       // 1. Total Incidents Count
       const [totalResult] = await db
@@ -230,11 +234,12 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
         resolved: dailyStatusMap[day].resolved,
       }));
 
-      // 7. Recent Active/Critical Incidents (Limit 5)
+      // 7. Recent Active/Critical Incidents (Limit 1 for Tech/Client, Limit 5 for Admin/Manager)
+      const recentLimit = (isClient || currentUser.role === "Technician") ? 1 : 5;
       const recentIncidents = await db.query.incidents.findMany({
         where: baseFilter,
         orderBy: [desc(incidents.createdAt)],
-        limit: 5,
+        limit: recentLimit,
         with: {
           vehicle: {
             columns: { name: true, licensePlate: true },

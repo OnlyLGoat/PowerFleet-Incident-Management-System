@@ -1,23 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { 
   AlertCircle, 
   ChevronLeft, 
   ChevronRight, 
   Eye,
   Edit,
-  CheckSquare,
   Trash2,
-  Check,
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
 import InlineDisclosureMenu, { MenuAction } from "@/components/ui/InlineDisclosureMenu";
 import { IncidentListItem, DBTechnician } from "@/types/incident";
-import { toast } from "sonner";
 
 interface AdminIncidentTableProps {
   incidents: IncidentListItem[];
@@ -25,8 +21,8 @@ interface AdminIncidentTableProps {
   error: string | null;
   role: string;
   isClient: boolean;
-  dbTechnicians: DBTechnician[];
-  setIncidents: React.Dispatch<React.SetStateAction<IncidentListItem[]>>;
+  dbTechnicians?: DBTechnician[];
+  setIncidents?: React.Dispatch<React.SetStateAction<IncidentListItem[]>>;
 }
 
 export default function AdminIncidentTable({
@@ -34,98 +30,9 @@ export default function AdminIncidentTable({
   loading,
   error,
   role,
-  isClient,
-  dbTechnicians,
-  setIncidents
+  isClient
 }: AdminIncidentTableProps) {
   const [page, setPage] = useState(1);
-  
-  // Dropdown Pending State & Saving for PATCH
-  const [pendingStatus, setPendingStatus] = useState<Record<number, string>>({});
-  const [pendingTech, setPendingTech] = useState<Record<number, string>>({});
-  const [savingMap, setSavingMap] = useState<Record<number, boolean>>({});
-  const [successMap, setSuccessMap] = useState<Record<number, boolean>>({});
-
-  const handleStatusChange = (id: number, val: string) => {
-    setPendingStatus((prev) => ({ ...prev, [id]: val }));
-  };
-
-  const handleTechChange = (id: number, val: string) => {
-    setPendingTech((prev) => ({ ...prev, [id]: val }));
-  };
-
-  const handleSaveIncident = async (incidentId: number, currentStatus: string) => {
-    const newStatus = pendingStatus[incidentId] ?? currentStatus;
-    const newTechName = pendingTech[incidentId];
-
-    setSavingMap((prev) => ({ ...prev, [incidentId]: true }));
-    try {
-      const payload: Record<string, unknown> = {
-        status: newStatus,
-        message: `Updated incident parameters from list`,
-      };
-
-      if (newTechName !== undefined) {
-        if (newTechName === "") {
-          payload.assignedToId = null;
-        } else {
-          const matchedTech = dbTechnicians.find((t) => t.name === newTechName);
-          if (matchedTech) {
-            payload.assignedToId = matchedTech.id;
-          }
-        }
-      }
-
-      await axios.patch(`/api/incidents/${incidentId}`, payload);
-
-      setIncidents((prev) =>
-        prev.map((item) =>
-          item.id === incidentId
-            ? {
-                ...item,
-                status: newStatus as IncidentListItem["status"],
-                assignedTo: newTechName !== undefined
-                  ? { internalUser: { user: { name: newTechName } } }
-                  : item.assignedTo,
-              }
-            : item
-        )
-      );
-
-      setSuccessMap((prev) => ({ ...prev, [incidentId]: true }));
-      setTimeout(() => {
-        setSuccessMap((prev) => ({ ...prev, [incidentId]: false }));
-      }, 2000);
-
-      setPendingStatus((prev) => {
-        const copy = { ...prev };
-        delete copy[incidentId];
-        return copy;
-      });
-      setPendingTech((prev) => {
-        const copy = { ...prev };
-        delete copy[incidentId];
-        return copy;
-      });
-      
-      toast.success('Update Successful', {
-        description: 'The incident details have been successfully updated.',
-        style: {
-          '--normal-bg': 'color-mix(in oklab, light-dark(var(--color-green-600), var(--color-green-400)) 10%, var(--background))',
-          '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
-          '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))',
-          borderRadius: '16px',
-        } as React.CSSProperties,
-        className: 'shadow-xl shadow-emerald-500/5',
-      });
-      
-    } catch (err: unknown) {
-      console.error("Failed to patch incident:", err);
-      alert("Failed to update incident. Please try again.");
-    } finally {
-      setSavingMap((prev) => ({ ...prev, [incidentId]: false }));
-    }
-  };
 
   const getPriorityBadgeStyle = (priority: string) => {
     switch (priority) {
@@ -201,7 +108,6 @@ export default function AdminIncidentTable({
                   if (isClient) {
                     menuActions.push({ label: "Edit Details", icon: Edit, onClick: () => console.log("Edit", item.id) });
                   } else if (role === "Admin" || role === "Support Manager") {
-                    menuActions.push({ label: "Resolve Incident", icon: CheckSquare, onClick: () => console.log("Resolve", item.id) });
                     if (role === "Admin") {
                       menuActions.push({ label: "Delete Ticket", icon: Trash2, onClick: () => console.log("Delete", item.id), destructive: true });
                     }
@@ -231,86 +137,18 @@ export default function AdminIncidentTable({
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {role === "Admin" || role === "Support Manager" ? (
-                          <div className="flex items-center gap-1.5">
-                            <select
-                              value={pendingStatus[item.id] ?? item.status}
-                              onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-28"
-                            >
-                              <option value="New">New</option>
-                              <option value="Open">Open</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Waiting Client">Waiting Client</option>
-                              <option value="Resolved">Resolved</option>
-                              <option value="Closed">Closed</option>
-                            </select>
-
-                            {pendingStatus[item.id] !== undefined && pendingStatus[item.id] !== item.status && (
-                              <button
-                                type="button"
-                                disabled={savingMap[item.id]}
-                                onClick={() => handleSaveIncident(item.id, item.status)}
-                                className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center justify-center"
-                                title="Save Status Change"
-                              >
-                                {savingMap[item.id] ? (
-                                  <Loader2 className="size-3.5 animate-spin" />
-                                ) : (
-                                  <Check className="size-3.5 stroke-[2.5]" />
-                                )}
-                              </button>
-                            )}
-
-                            {successMap[item.id] && (
-                              <span className="text-emerald-500 text-[10px] font-bold animate-fade-in flex items-center gap-0.5">
-                                <Check className="size-3" /> Saved!
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className={cn("px-2.5 py-1 rounded-md text-[11px] font-medium border", getStatusBadgeStyle(item.status))}>
-                            {item.status}
-                          </span>
-                        )}
+                        <span className={cn("px-2.5 py-1 rounded-md text-[11px] font-medium border", getStatusBadgeStyle(item.status))}>
+                          {item.status}
+                        </span>
                       </td>
 
                       <td className="py-3.5 px-4">
                         {role === "ClientUser" ? (
                           <span className="text-slate-400 italic font-medium text-[11px]">N/A</span>
-                        ) : role === "Admin" || role === "Support Manager" ? (
-                          <div className="flex items-center gap-1.5">
-                            <select
-                              value={pendingTech[item.id] ?? (item.assignedTo?.internalUser?.user?.name || "")}
-                              onChange={(e) => handleTechChange(item.id, e.target.value)}
-                              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer w-36"
-                            >
-                              <option value="">Unassigned</option>
-                              {dbTechnicians.map((tech) => (
-                                <option key={tech.id} value={tech.name}>
-                                  {tech.name} ({tech.specialty})
-                                </option>
-                              ))}
-                            </select>
-
-                            {pendingTech[item.id] !== undefined && pendingTech[item.id] !== (item.assignedTo?.internalUser?.user?.name || "") && (
-                              <button
-                                type="button"
-                                disabled={savingMap[item.id]}
-                                onClick={() => handleSaveIncident(item.id, item.status)}
-                                className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center justify-center"
-                                title="Save Technician Assignment"
-                              >
-                                {savingMap[item.id] ? (
-                                  <Loader2 className="size-3.5 animate-spin text-white" />
-                                ) : (
-                                  <Check className="size-3.5 stroke-[2.5]" />
-                                )}
-                              </button>
-                            )}
-                          </div>
                         ) : (
-                          <span className="text-slate-600 dark:text-slate-400 font-medium text-[11px]">{item.assignedTo?.internalUser?.user?.name || "Unassigned"}</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
+                            {typeof item.assignedTo === "string" ? item.assignedTo : item.assignedTo?.internalUser?.user?.name || "Unassigned"}
+                          </span>
                         )}
                       </td>
 

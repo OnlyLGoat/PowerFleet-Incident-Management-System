@@ -157,14 +157,14 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
             </button>
           )}
 
-          {currentStatus === "In Progress" && (
+          {currentStatus !== "Resolved" && currentStatus !== "Closed" && (
             <button
               onClick={() => setShowResolveForm(true)}
               disabled={loading}
               className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
             >
               <CheckCircle className="size-4" />
-              Mark Resolved
+              Resolve Incident
             </button>
           )}
 
