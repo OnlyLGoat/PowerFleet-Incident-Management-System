@@ -180,37 +180,7 @@ export default function AuditLogsPage() {
   const { analytics } = data;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16 w-full">
-      
-      {/* 1. Top Section: Header & Live System Health Indicator */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-              System Audit & Compliance Engine
-            </span>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Monitored
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-            <ShieldCheck className="size-6 text-emerald-500" />
-            Security Audit Logs & Event Timeline
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Real-time HTTP authorization logs, security analytics, and incident state modification timeline.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={fetchAuditLogs}
-          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
-        >
-          <RefreshCw className="size-3.5" /> Refresh Audit Stream
-        </button>
-      </div>
+    <div className="space-y-8 max-w-[1720px] mx-auto pb-16 w-full">
 
       {/* 2. Hero Security Scorecards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -381,6 +351,16 @@ export default function AuditLogsPage() {
                 </select>
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={fetchAuditLogs}
+              title="Refresh Audit Stream"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm cursor-pointer select-none"
+            >
+              <RefreshCw className="size-3.5" />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
 
           </div>
 

@@ -6,9 +6,9 @@ export type SlaState =
   | "Healthy"
   | "Warning_Response"
   | "Warning_Resolution"
-  | "Breached_Response"
-  | "Breached_Resolution"
-  | "Breached_Both"
+  | "Overdue_Response"
+  | "Overdue_Resolution"
+  | "Overdue_Both"
   | (string & {}); // Fixes union override while allowing generic strings
 
 interface SlaBadgeProps {
@@ -40,23 +40,23 @@ export function getSlaBadgeConfig(status?: SlaState) {
         dotClass: "bg-amber-500 animate-pulse",
         icon: AlertTriangle,
       };
-    case "Breached_Response":
+    case "Overdue_Response":
       return {
-        label: "Response Breached",
+        label: "Response Overdue",
         colorClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30",
         dotClass: "bg-rose-500 animate-pulse",
         icon: ShieldAlert,
       };
-    case "Breached_Resolution":
+    case "Overdue_Resolution":
       return {
-        label: "Resolution Breached",
+        label: "Resolution Overdue",
         colorClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30",
         dotClass: "bg-rose-500 animate-pulse",
         icon: ShieldAlert,
       };
-    case "Breached_Both":
+    case "Overdue_Both":
       return {
-        label: "SLA Breached Both",
+        label: "SLA Overdue Both",
         colorClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 dark:border-purple-500/30",
         dotClass: "bg-purple-500 animate-pulse",
         icon: ShieldAlert,

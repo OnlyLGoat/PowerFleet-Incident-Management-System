@@ -20,6 +20,11 @@ export const POST = withAuth(async (req: AuthenticatedRequest, { params }: { par
             return NextResponse.json({ error: "File is required." }, { status: 400 });
         }
 
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            return NextResponse.json({ error: "Only image files (PNG, JPG, WEBP) are allowed. GIFs and PDFs are not supported." }, { status: 400 });
+        }
+
         const buffer = Buffer.from(await file.arrayBuffer());
         // Simple sanitization
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
@@ -31,7 +36,7 @@ export const POST = withAuth(async (req: AuthenticatedRequest, { params }: { par
         const filePath = path.join(uploadsDir, filename);
         await fs.writeFile(filePath, buffer);
 
-        const fileUrl = `/uploads/${filename}`;
+        const fileUrl = `/api/uploads/${filename}`;
 
         // DB Insert
         const [attachment] = await db.insert(incident_attachments).values({

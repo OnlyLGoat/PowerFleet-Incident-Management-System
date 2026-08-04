@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db"
-import { users } from "@/db/schema"
+import { users, internal_users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
@@ -53,22 +53,33 @@ export async function POST(req: Request) {
             .select()
             .from(users)
             .where(eq(users.email, email.trim().toLowerCase()))
-            .limit(1)
+            .limit(1);
             
-        if(!user) {
+        if (!user || user.deletedAt !== null) {
             return NextResponse.json(
                 { success: false, error: "Email Invalid !" },
                 { status: 401 }
-            )
+            );
+        }
+
+        // Check if internal user is active
+        const internalUserRecord = await db.query.internal_users.findFirst({
+            where: eq(internal_users.userId, user.id)
+        });
+        if (internalUserRecord && !internalUserRecord.isActive) {
+            return NextResponse.json(
+                { success: false, error: "Your account has been deactivated. Please contact an administrator." },
+                { status: 403 }
+            );
         }
         
         // 3. Compare Cryptographic Hashes
-        const isPasswordValid = await bcrypt.compare(password, user.password)
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if(!isPasswordValid) {
             return NextResponse.json(
                 { success: false, error: "Password Invalid !" },
                 { status: 401 }
-            )
+            );
         }
 
         // 4. Resolve Dynamic Role (for user response profile payload only)

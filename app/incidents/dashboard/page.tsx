@@ -44,9 +44,9 @@ export interface DashboardStats {
   resolved: number;
   vehiclesCount: number;
   slaWarnings: number;
-  slaBreached: number;
+  slaOverdue: number;
   categoryDistribution: Array<{ category: string; count: number }>;
-  dailySlaBreakdown?: Array<{ day: string; healthy: number; warning: number; breached: number }>;
+  dailySlaBreakdown?: Array<{ day: string; healthy: number; warning: number; overdue: number }>;
   dailyCategoryBreakdown?: Array<{ day: string; gps: number; vehicle: number; fuel: number; accident: number }>;
   dailyStatusBreakdown?: Array<{ day: string; open: number; inProgress: number; resolved: number }>;
   recentIncidents: Array<{
@@ -87,8 +87,9 @@ const getRiskBadgeClass = (isHigh: boolean, isMedium: boolean) => {
 };
 
 export default function IncidentsDashboardPage() {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const isClient = role === "ClientUser";
+  const isTechnician = role === "Technician";
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -131,30 +132,6 @@ export default function IncidentsDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* 1. Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              {isClient ? "Client Portal" : "Operations Overview"}
-            </span>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-              {role ?? "User"}
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Dashboard
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs text-slate-400">Logged in as</p>
-            <p className="font-semibold text-slate-900 dark:text-white text-sm">{user?.name}</p>
-          </div>
-        </div>
-      </div>
 
       {error && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-medium flex items-center justify-between">
@@ -213,7 +190,7 @@ export default function IncidentsDashboardPage() {
           </div>
         )}
 
-        {/* Metric 3: Role-Based (Client sees 'Fleet Count', Internal sees 'SLA Breached') */}
+        {/* Metric 3: Role-Based (Client sees 'Fleet Count', Internal sees 'SLA Overdue') */}
         {isClient ? (
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
@@ -231,12 +208,12 @@ export default function IncidentsDashboardPage() {
         ) : (
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
             <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-medium">SLA Breached</span>
+              <span className="text-xs font-medium">SLA Overdue</span>
               <ShieldAlert className="size-4 text-rose-500" />
             </div>
             <div className="flex items-baseline justify-between">
               <span className="text-2xl font-bold text-rose-500">
-                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaBreached ?? 0)}
+                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaOverdue ?? 0)}
               </span>
               <span className="text-xs text-rose-400 font-medium">Overdue</span>
             </div>
@@ -315,7 +292,7 @@ export default function IncidentsDashboardPage() {
           </div>
 
           {/* Bottom Left: Client Fleet Operational Impact Monitor (For Support Manager & Admin / Non-clients) */}
-          {!isClient && (
+          {!isClient && !isTechnician && (
             <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

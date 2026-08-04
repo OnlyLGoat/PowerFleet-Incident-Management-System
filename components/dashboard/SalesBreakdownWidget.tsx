@@ -25,19 +25,19 @@ export interface SalesBreakdownWidgetProps {
 }
 
 const defaultData = [
-  { day: "Mon", healthy: 12, warning: 3, breached: 1 },
-  { day: "Tue", healthy: 8, warning: 2, breached: 0 },
-  { day: "Wed", healthy: 15, warning: 4, breached: 2 },
-  { day: "Thu", healthy: 10, warning: 1, breached: 1 },
-  { day: "Fri", healthy: 18, warning: 5, breached: 3 },
-  { day: "Sat", healthy: 6, warning: 1, breached: 0 },
-  { day: "Sun", healthy: 4, warning: 0, breached: 0 },
+  { day: "Mon", healthy: 12, warning: 3, overdue: 1 },
+  { day: "Tue", healthy: 8, warning: 2, overdue: 0 },
+  { day: "Wed", healthy: 15, warning: 4, overdue: 2 },
+  { day: "Thu", healthy: 10, warning: 1, overdue: 1 },
+  { day: "Fri", healthy: 18, warning: 5, overdue: 3 },
+  { day: "Sat", healthy: 6, warning: 1, overdue: 0 },
+  { day: "Sun", healthy: 4, warning: 0, overdue: 0 },
 ];
 
 const defaultChannels: BreakdownChannel[] = [
   { key: "healthy", label: "SLA Healthy", color: "#10b981" },
   { key: "warning", label: "SLA Warning", color: "#f59e0b" },
-  { key: "breached", label: "SLA Breached", color: "#f43f5e" },
+  { key: "overdue", label: "SLA Overdue", color: "#f43f5e" },
 ];
 
 interface TooltipItem {

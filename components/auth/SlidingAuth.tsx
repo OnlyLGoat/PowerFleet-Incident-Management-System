@@ -1,32 +1,8 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-
-// Google SVG Icon
-const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" width="1em" height="1em" {...props}>
-    <path
-      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-      fill="#4285F4"
-    />
-    <path
-      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.16v2.84C3.99 20.53 7.7 23 12 23z"
-      fill="#34A853"
-    />
-    <path
-      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.16C1.43 8.55 1 10.22 1 12s.43 3.45 1.16 4.93l3.68-2.84z"
-      fill="#FBBC05"
-    />
-    <path
-      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.16 7.07l3.68 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-      fill="#EA4335"
-    />
-  </svg>
-);
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -58,7 +34,18 @@ const itemVariants: Variants = {
 
 export default function SlidingAuth() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(false);
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode");
+  const [isLogin, setIsLogin] = useState(() => !(mode === "signup" || mode === "register"));
+  const [prevMode, setPrevMode] = useState<string | null>(mode);
+  if (mode !== prevMode) {
+    setPrevMode(mode);
+    if (mode === "signup" || mode === "register") {
+      setIsLogin(false);
+    } else if (mode === "login") {
+      setIsLogin(true);
+    }
+  }
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -259,23 +246,6 @@ export default function SlidingAuth() {
                   </div>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="flex items-center justify-between mt-1">
-                  <div className="flex items-center gap-2.5">
-                    <input
-                      id="remember"
-                      name="remember"
-                      type="checkbox"
-                      className="size-[18px] rounded border-slate-300 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500 transition-colors bg-white dark:bg-slate-950"
-                    />
-                    <label htmlFor="remember" className="text-[14px] text-slate-600 dark:text-slate-400">
-                      Keep me signed in
-                    </label>
-                  </div>
-                  <button type="button" className="text-[14px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline transition-colors">
-                    Forgot password?
-                  </button>
-                </motion.div>
-
                 <motion.div variants={itemVariants} className="mt-2">
                   <button
                     type="submit"
@@ -314,14 +284,29 @@ export default function SlidingAuth() {
                 </motion.div>
               </form>
 
-              <motion.div variants={itemVariants} className="mt-4">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 text-[14px] font-medium text-slate-700 dark:text-slate-200 transition-transform active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-slate-700"
-                >
-                  <GoogleIcon className="size-[18px]" />
-                  Sign in with Google
-                </button>
+              <motion.div variants={itemVariants} className="mt-6">
+                <div className="text-xs text-slate-500 mb-2 font-medium">Quick Test Login</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { role: 'Manager', email: 'manager@powerfleet.com' },
+                    { role: 'Technician', email: 'tech.david@powerfleet.com' },
+                    { role: 'Client', email: 'client.fleet@metrotransport.com' },
+                    { role: 'Admin', email: 'admin@powerfleet.com' }
+                  ].map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      onClick={() => {
+                        setEmail(account.email);
+                        setPassword("Password123!");
+                      }}
+                      className="p-2 text-xs border border-slate-200 dark:border-slate-800 rounded bg-slate-50 dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-200 dark:hover:border-emerald-800/50 text-left transition-colors"
+                    >
+                      <div className="font-semibold text-slate-800 dark:text-slate-200">{account.role}</div>
+                      <div className="text-slate-500 dark:text-slate-400 truncate">{account.email}</div>
+                    </button>
+                  ))}
+                </div>
               </motion.div>
 
               <motion.div variants={itemVariants} className="mt-6 sm:mt-8 text-center text-xs sm:text-[14px] text-slate-500 dark:text-slate-400">

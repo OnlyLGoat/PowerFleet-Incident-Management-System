@@ -34,6 +34,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { para
                 isAdmin ? undefined : isNull(incidents.deletedAt)
             ),
             with: {
+                vehicle: true,
                 comments: {
                     where: isAdmin ? undefined : isNull(incident_comments.deletedAt),
                     with: {
@@ -162,7 +163,17 @@ export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { pa
         } catch {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
-        
+
+        if (
+            (body.status !== undefined || body.priority !== undefined || body.assignedToId !== undefined) &&
+            (!body.message || typeof body.message !== "string" || !body.message.trim())
+        ) {
+            return NextResponse.json(
+                { error: "Reason/message is required when changing status, priority, or technician assignment." },
+                { status: 400 }
+            );
+        }
+
         const newUpdatedIncident = await IncidentService.updateIncident(body, currentUser.userId, incidentId);
         
         return NextResponse.json(

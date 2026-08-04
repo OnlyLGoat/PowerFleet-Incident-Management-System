@@ -13,9 +13,9 @@ function createStatusError(message: string, status: number): StatusError {
 }
 
 export type SlaStatus = 
-    | "Healthy" | "Met" | "Met_With_Response_Breached" | "Met_With_Resolution_Breached" 
-    | "Breached_Both" | "Warning_Response" | "Warning_Resolution" | "Breached_Response" 
-    | "Breached_Resolution" ;
+    | "Healthy" | "Met" | "Met_With_Response_Overdue" | "Met_With_Resolution_Overdue" 
+    | "Overdue_Both" | "Warning_Response" | "Warning_Resolution" | "Overdue_Response" 
+    | "Overdue_Resolution" ;
 
 export type SlaPriority = "Low" | "Medium" | "High" | "Critical";
 
@@ -105,12 +105,12 @@ export class SlaService {
             return "Met";
         }
         if (!responseOnTime && resolutionOnTime) {
-            return "Met_With_Response_Breached";
+            return "Met_With_Response_Overdue";
         }
         if (responseOnTime && !resolutionOnTime) {
-            return "Met_With_Resolution_Breached";
+            return "Met_With_Resolution_Overdue";
         }
-        return "Breached_Both";
+        return "Overdue_Both";
     }
 
     private static evaluateActiveSlaStatus(
@@ -124,7 +124,7 @@ export class SlaService {
             const remainingResponse = responseDueTime - currentTime;
             if (remainingResponse <= 0) {
                 const remainingResolution = resolutionDueTime - currentTime;
-                return remainingResolution <= 0 ? "Breached_Both" : "Breached_Response";
+                return remainingResolution <= 0 ? "Overdue_Both" : "Overdue_Response";
             }
             const threshold = SLA_CONFIG[priority].responseWarningMs;
             return remainingResponse <= threshold ? "Warning_Response" : "Healthy";
@@ -134,14 +134,14 @@ export class SlaService {
         if (responseOnTime) {
             const remainingResolution = resolutionDueTime - currentTime;
             if (remainingResolution <= 0) {
-                return "Breached_Resolution";
+                return "Overdue_Resolution";
             }
             const threshold = SLA_CONFIG[priority].resolutionWarningMs;
             return remainingResolution <= threshold ? "Warning_Resolution" : "Healthy";
         }
 
         const remainingResolution = resolutionDueTime - currentTime;
-        return remainingResolution <= 0 ? "Breached_Both" : "Breached_Response";
+        return remainingResolution <= 0 ? "Overdue_Both" : "Overdue_Response";
     }
 
     /**
@@ -221,7 +221,11 @@ export class SlaService {
         });
 
         for (const item of activeIncidents) {
-            await this.calculateSLA(item.id, now);
+            try {
+                await this.calculateSLA(item.id, now);
+            } catch {
+                // Safely skip incidents deleted concurrently during cleanup
+            }
         }
     }
 }

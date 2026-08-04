@@ -63,7 +63,7 @@ describe("Incident Filtering & Search API", () => {
         // 5. Create Incidents to Filter
         const data = [
             { title: "GPS offline completely", description: "Desc", type: "GPS Device" as const, priority: "High" as const, status: "Open" as const, slaStatus: "Healthy" as const },
-            { title: "Engine issue", description: "Desc", type: "Vehicle" as const, priority: "Critical" as const, status: "In Progress" as const, slaStatus: "Breached_Response" as const, assignedToId: techRecord.internalUserId },
+            { title: "Engine issue", description: "Desc", type: "Vehicle" as const, priority: "Critical" as const, status: "In Progress" as const, slaStatus: "Overdue_Response" as const, assignedToId: techRecord.internalUserId },
             { title: "Driver complain", description: "Desc", type: "Driver" as const, priority: "Low" as const, status: "Resolved" as const, slaStatus: "Met" as const },
         ];
         
@@ -123,9 +123,9 @@ describe("Incident Filtering & Search API", () => {
     });
 
     it("should ignore slaStatus and assignedToId filters for ClientUser (RBAC)", async () => {
-        // Client attempts to filter by Breached_Response which would normally yield 1 result
+        // Client attempts to filter by Overdue_Response which would normally yield 1 result
         // But since clients can't filter by SLA, it should ignore the filter and return all 3 tickets.
-        const req = new NextRequest("http://localhost/api/incidents?slaStatus=Breached_Response&assignedToId=9999", {
+        const req = new NextRequest("http://localhost/api/incidents?slaStatus=Overdue_Response&assignedToId=9999", {
             method: "GET",
             headers: { "Authorization": `Bearer ${clientToken}` }
         });

@@ -9,9 +9,10 @@ import {
   LayoutDashboard, 
   ShieldCheck, 
   AlertTriangle, 
-  BarChart3, 
   ChevronDown,
   ChevronUp,
+  Car,
+  Users,
   type LucideIcon
 } from "lucide-react";
 
@@ -32,9 +33,8 @@ export interface FloatingDockProps {
 
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/incidents/dashboard", icon: LayoutDashboard },
-  { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle, badgeCount: 3 },
+  { id: "incidents", label: "Incidents", href: "/incidents", icon: AlertTriangle },
   { id: "audit-logs", label: "Audit Logs", href: "/audit-logs", icon: ShieldCheck },
-  { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
 /**
@@ -49,12 +49,19 @@ export default function FloatingDock({
   const { role } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const visibleItems = items.filter((item) => {
+  const baseItems = items.filter((item) => {
     if (item.id === "audit-logs" && role !== "Admin") {
       return false;
     }
     return true;
   });
+
+  const adminNavItems: NavItem[] = role === "Admin" ? [
+    { id: "vehicles", label: "Vehicles", href: "/vehicles", icon: Car },
+    { id: "users", label: "Users", href: "/users", icon: Users },
+  ] : [];
+
+  const allVisibleItems = [...baseItems, ...adminNavItems];
 
   return (
     <div
@@ -70,7 +77,7 @@ export default function FloatingDock({
         className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2.5 rounded-full bg-slate-900/90 dark:bg-slate-900/95 border border-slate-800/90 shadow-2xl backdrop-blur-2xl text-slate-400 max-w-[95vw] overflow-x-auto no-scrollbar"
       >
         <AnimatePresence mode="popLayout">
-          {isExpanded && visibleItems.map((item) => {
+          {isExpanded && allVisibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== "/incidents" && pathname.startsWith(item.href));
 

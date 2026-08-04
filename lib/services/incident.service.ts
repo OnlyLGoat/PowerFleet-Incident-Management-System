@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { incidents, clients, vehicles, internal_users, technicians, support_managers, users, incident_internal_notes } from "@/db/schema";
+import { incidents, clients, vehicles, internal_users, technicians, support_managers, users, incident_internal_notes, incident_tasks } from "@/db/schema";
 import { eq, and, isNull, ilike, inArray, gte, lte, SQL } from "drizzle-orm";
 import { verifyAdminAccess } from "@/lib/services/role";
 import { auditLogChanges } from "./audit";
@@ -272,6 +272,31 @@ export class IncidentService {
         });
     }
 
+    private static async verifySubtasksCompletedForResolution(incidentId: number) {
+        const subtasks = await db
+            .select({
+                id: incident_tasks.id,
+                isCompleted: incident_tasks.isCompleted
+            })
+            .from(incident_tasks)
+            .where(
+                and(
+                    eq(incident_tasks.incidentId, incidentId),
+                    isNull(incident_tasks.deletedAt)
+                )
+            );
+
+        const totalTasks = subtasks.length;
+        const uncompletedTasks = subtasks.filter(t => !t.isCompleted).length;
+
+        if (totalTasks > 0 && uncompletedTasks > 0) {
+            throw createStatusError(
+                `Cannot resolve incident: ${uncompletedTasks} of ${totalTasks} sub-tasks are still uncompleted. Complete all sub-tasks first.`,
+                400
+            );
+        }
+    }
+
     /**
      * Changes the status of an incident ticket.
      */
@@ -295,6 +320,10 @@ export class IncidentService {
 
         if (resolvedRole === "ClientUser") {
             throw createStatusError("Forbidden: Clients cannot directly change incident status.", 403);
+        }
+
+        if (newStatus === "Resolved") {
+            await this.verifySubtasksCompletedForResolution(incidentId);
         }
 
         // 2. Check internal user active
@@ -516,6 +545,10 @@ export class IncidentService {
         if (data.status === "Closed" || data.status === "Cancelled") {
             throw createStatusError("Forbidden: Technicians cannot close or cancel an incident.", 403);
         }
+
+        if (data.status === "Resolved") {
+            await this.verifySubtasksCompletedForResolution(incidentId);
+        }
         
         if (!data.message) {
             throw createStatusError("Message For This Action Is Required", 400);
@@ -579,6 +612,10 @@ export class IncidentService {
             if (resolvedRole !== "Admin") {
                 throw createStatusError("Forbidden: Support Managers cannot close or cancel an incident.", 403);
             }
+        }
+        
+        if (data.status === "Resolved") {
+            await this.verifySubtasksCompletedForResolution(incidentId);
         }
         
         if (data.assignedToId !== undefined && data.assignedToId !== null) {

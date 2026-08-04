@@ -91,7 +91,7 @@ describe("SLA Calculation Service Logic", () => {
         expect(status).toBe("Warning_Response");
     });
 
-    it("should transition to Breached_Response when response due time passes", async () => {
+    it("should transition to Overdue_Response when response due time passes", async () => {
         const baseTime = Date.now();
         const responseDueAt = new Date(baseTime - 10 * 60 * 1000); // 10 minutes overdue
         const resolutionDueAt = new Date(baseTime + 4 * 60 * 60 * 1000); // Resolution still active
@@ -104,7 +104,7 @@ describe("SLA Calculation Service Logic", () => {
         }).where(eq(incidents.id, incidentId));
 
         const status = await SlaService.calculateSLA(incidentId, new Date(baseTime));
-        expect(status).toBe("Breached_Response");
+        expect(status).toBe("Overdue_Response");
     });
 
     it("should transition to Met when response and resolution are resolved on time", async () => {
@@ -125,10 +125,10 @@ describe("SLA Calculation Service Logic", () => {
         expect(status).toBe("Met");
     });
 
-    it("should transition to Met_With_Response_Breached when response is late but resolution is on time", async () => {
+    it("should transition to Met_With_Response_Overdue when response is late but resolution is on time", async () => {
         const baseTime = Date.now();
         const responseDueAt = new Date(baseTime + 1 * 60 * 60 * 1000);
-        const firstResponseAt = new Date(baseTime + 2 * 60 * 60 * 1000); // Late (Breached)
+        const firstResponseAt = new Date(baseTime + 2 * 60 * 60 * 1000); // Late (Overdue)
         const resolutionDueAt = new Date(firstResponseAt.getTime() + 12 * 60 * 60 * 1000); // 12h limit
         const resolvedAt = new Date(baseTime + 6 * 60 * 60 * 1000); // On time (Met)
 
@@ -140,15 +140,15 @@ describe("SLA Calculation Service Logic", () => {
         }).where(eq(incidents.id, incidentId));
 
         const status = await SlaService.calculateSLA(incidentId, new Date(baseTime));
-        expect(status).toBe("Met_With_Response_Breached");
+        expect(status).toBe("Met_With_Response_Overdue");
     });
 
-    it("should transition to Met_With_Resolution_Breached when response is on time but resolution is late", async () => {
+    it("should transition to Met_With_Resolution_Overdue when response is on time but resolution is late", async () => {
         const baseTime = Date.now();
         const responseDueAt = new Date(baseTime + 2 * 60 * 60 * 1000);
         const firstResponseAt = new Date(baseTime + 1 * 60 * 60 * 1000); // On time (Met)
         const resolutionDueAt = new Date(firstResponseAt.getTime() + 12 * 60 * 60 * 1000); // 12h limit
-        const resolvedAt = new Date(baseTime + 15 * 60 * 60 * 1000); // Late (Breached, > 13h)
+        const resolvedAt = new Date(baseTime + 15 * 60 * 60 * 1000); // Late (Overdue, > 13h)
 
         await db.update(incidents).set({
             responseDueAt,
@@ -158,10 +158,10 @@ describe("SLA Calculation Service Logic", () => {
         }).where(eq(incidents.id, incidentId));
 
         const status = await SlaService.calculateSLA(incidentId, new Date(baseTime));
-        expect(status).toBe("Met_With_Resolution_Breached");
+        expect(status).toBe("Met_With_Resolution_Overdue");
     });
 
-    it("should transition to Breached_Both when both response and resolution are late", async () => {
+    it("should transition to Overdue_Both when both response and resolution are late", async () => {
         const baseTime = Date.now();
         const responseDueAt = new Date(baseTime + 1 * 60 * 60 * 1000);
         const firstResponseAt = new Date(baseTime + 2 * 60 * 60 * 1000); // Late
@@ -176,7 +176,7 @@ describe("SLA Calculation Service Logic", () => {
         }).where(eq(incidents.id, incidentId));
 
         const status = await SlaService.calculateSLA(incidentId, new Date(baseTime));
-        expect(status).toBe("Breached_Both");
+        expect(status).toBe("Overdue_Both");
     });
 
     it("should run polling routine checkOverdueTickets to update open ticket SLA status successfully", async () => {
@@ -199,7 +199,7 @@ describe("SLA Calculation Service Logic", () => {
             where: eq(incidents.id, incidentId)
         });
 
-        expect(ticket?.slaStatus).toBe("Breached_Response");
+        expect(ticket?.slaStatus).toBe("Overdue_Response");
     });
 
     it("should reject cron route requests if CRON_SLA_SECRET is missing or wrong", async () => {

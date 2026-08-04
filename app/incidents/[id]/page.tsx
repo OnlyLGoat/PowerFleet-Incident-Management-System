@@ -22,14 +22,15 @@ import {
   Loader2,
   ChevronRight,
   ChevronLeft,
-  Plus
+  Plus,
+  Zap,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
-import TechActionPanel from "@/components/ui/TechActionPanel";
 import AssignTechnicianPanel from "@/components/incidents/AssignTechnicianPanel";
 import IncidentStatusPriorityPanel from "@/components/incidents/IncidentStatusPriorityPanel";
-import ImpactMap from "@/components/incidents/ImpactMap";
+import IncidentSubTasksWidget from "@/components/incidents/IncidentSubTasksWidget";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -39,6 +40,7 @@ interface AttachmentItem {
   fileUrl: string;
   fileType: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 
 interface CommentUser {
@@ -154,6 +156,18 @@ export default function IncidentDetailPage() {
     }
   }, [incidentId]);
 
+  const handleDeleteAttachment = async (attachmentId: number) => {
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
+    try {
+      await axios.delete(`/api/incidents/${incidentId}/attachment/${attachmentId}`);
+      toast.success("Attachment deleted successfully.");
+      fetchIncidentDetails();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      toast.error(e.response?.data?.error || "Failed to delete attachment.");
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
     async function loadData() {
@@ -191,7 +205,8 @@ export default function IncidentDetailPage() {
 
     try {
       setPostingComment(true);
-      await axios.post(`/api/incidents/${incidentId}/comments`, {
+      const targetId = incident?.id || Number(incidentId);
+      await axios.post(`/api/incidents/${targetId}/comments`, {
         body: newComment.trim(),
         visibility: "Public",
       });
@@ -286,149 +301,157 @@ export default function IncidentDetailPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12 w-full">
-      {/* Top Header & Breadcrumb Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div>
-          <Link
-            href="/incidents"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors mb-2"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to All Incidents
-          </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">
-              #{incident.id}
-            </h1>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="text-base font-semibold text-slate-700 dark:text-slate-200">
-              {incident.title}
-            </span>
-          </div>
-        </div>
+    <div className="space-y-6 max-w-[1720px] mx-auto pb-12 w-full">
+      {/* 1. Top Breadcrumb & Modern Hero Card */}
+      <div className="space-y-4">
+        <Link
+          href="/incidents"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer select-none"
+        >
+          <ArrowLeft className="size-4" />
+          <span>Back to All Incidents</span>
+        </Link>
 
-        {/* Status & SLA Badges Header Row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            {incident.status}
-          </span>
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950">
-            {incident.priority} Priority
-          </span>
-          {incident.slaStatus && <SlaBadge status={incident.slaStatus} />}
-        </div>
-      </div>
-
-      {/* Impact Map System (Restricted to Admin & Support Manager) */}
-      {canViewImpactMap && <ImpactMap incidentId={Number(incidentId)} />}
-
-      {/* Responsive Grid Layout: Left Main Card & Discussion / Right Top-Right Internal Notes Widget */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Column: Incident Details Card & Comments Feed */}
-        <div className={cn("space-y-6", isInternal ? "lg:col-span-2" : "lg:col-span-3")}>
+        {/* Hero Incident Header Card */}
+        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-6 sm:p-8 shadow-sm space-y-5">
           
-          {/* Main Incident Details Card */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 sm:p-8 shadow-sm space-y-6">
-            
-            {/* Card Header Info Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-6 border-b border-slate-100 dark:border-slate-800/80 text-xs">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                  <Tag className="size-4 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-[11px] text-slate-400">Category / Type</p>
-                  <p className="font-semibold text-slate-900 dark:text-white">{incident.type}</p>
-                </div>
+          {/* Header Title Row */}
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs">
+                  #INC-{incident.id}
+                </span>
+                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {incident.status}
+                </span>
+                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  {incident.priority} Priority
+                </span>
+                {incident.slaStatus && <SlaBadge status={incident.slaStatus} />}
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                  <Truck className="size-4 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-[11px] text-slate-400">Target Vehicle</p>
-                  <p className="font-semibold text-slate-900 dark:text-white">
-                    {incident.vehicle ? `${incident.vehicle.name} (${incident.vehicle.licensePlate})` : "N/A"}
-                  </p>
-                </div>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                {incident.title}
+              </h1>
 
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                  <Clock className="size-4 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-[11px] text-slate-400">Reported On</p>
-                  <p className="font-semibold text-slate-900 dark:text-white">
-                    {new Date(incident.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Location / Address */}
-            <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-xs">
-              <MapPin className="size-4 text-emerald-500 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-slate-900 dark:text-white">Location / Address</p>
-                <p className="text-slate-600 dark:text-slate-300 mt-0.5">{incident.address}</p>
-              </div>
-            </div>
-
-            {/* Full Description Section */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <FileText className="size-3.5" /> Description & Details
-              </h3>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+              {/* Description directly after Title */}
+              <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-sans font-medium mt-3">
                 {incident.description}
               </div>
             </div>
 
-            {/* Tech Action Panel (Rendered only for non-clients, e.g. Technicians/Admins) */}
-            {isInternal && (
-              <TechActionPanel 
-                incidentId={Number(incidentId)} 
-                currentStatus={incident.status} 
-                onUpdate={fetchIncidentDetails} 
-              />
-            )}
-
-            {/* Assign Technician Panel (Rendered for Admin & Support Manager right after Tech Controls) */}
+            {/* Quick Actions (e.g. Impact Map link) */}
             {canViewImpactMap && (
-              <AssignTechnicianPanel
-                incidentId={Number(incidentId)}
-                currentAssignedId={incident.assignedToId}
-                onUpdate={fetchIncidentDetails}
-              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link
+                  href={`/incidents/${incidentId}/impact`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer select-none whitespace-nowrap"
+                >
+                  <Zap className="size-4" />
+                  <span>Impact Analysis</span>
+                </Link>
+              </div>
             )}
+          </div>
 
-            {/* Status & Priority Management Panel (Rendered for Admin & Support Manager) */}
-            {canViewImpactMap && (
-              <IncidentStatusPriorityPanel
-                incidentId={Number(incidentId)}
-                currentStatus={incident.status}
-                currentPriority={incident.priority}
-                onUpdate={fetchIncidentDetails}
-              />
-            )}
+          {/* Quick Metadata Chip Strip */}
+          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800/80 font-semibold">
+              <Tag className="size-3.5 text-emerald-500" />
+              <span>{incident.type}</span>
+            </div>
 
-            {/* Attachments Section */}
-            {incident.attachments && incident.attachments.length > 0 && (
-              <div className="space-y-3 border-t border-slate-100 dark:border-slate-800/80 pt-6">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <FileText className="size-3.5" /> Attachments ({incident.attachments.length})
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {incident.attachments.map(att => (
-                    <div key={att.id} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800/80 font-semibold">
+              <Truck className="size-3.5 text-emerald-500" />
+              <span>{incident.vehicle ? `${incident.vehicle.name} (${incident.vehicle.licensePlate})` : "Vehicle N/A"}</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800/80 font-semibold">
+              <MapPin className="size-3.5 text-emerald-500" />
+              <span>{incident.address}</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800/80 font-semibold ml-auto">
+              <Clock className="size-3.5 text-slate-400" />
+              <span>Reported {new Date(incident.createdAt).toLocaleString()}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Responsive Grid Layout: Left Main Column & Right Internal Notes Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        {/* Left Column: Prominent Incident Description, Details & Workflow Cards */}
+        <div className={cn("space-y-6", isInternal ? "lg:col-span-2" : "lg:col-span-3")}>
+          
+          {/* Assign Technician Panel (Rendered for Admin & Support Manager) */}
+          {canViewImpactMap && (
+            <AssignTechnicianPanel
+              incidentId={Number(incidentId)}
+              currentAssignedId={incident.assignedToId}
+              onUpdate={fetchIncidentDetails}
+            />
+          )}
+
+          {/* Status & Priority Management Panel (Rendered for Admin & Support Manager - Direct Resolution) */}
+          {canViewImpactMap && (
+            <IncidentStatusPriorityPanel
+              incidentId={Number(incidentId)}
+              currentStatus={incident.status}
+              currentPriority={incident.priority}
+              onUpdate={fetchIncidentDetails}
+            />
+          )}
+
+          {/* Attachments Section */}
+          {incident.attachments && incident.attachments.length > 0 && (
+            <div className="space-y-3 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <FileText className="size-3.5" /> Attachments ({incident.attachments.filter(att => role === "Admin" || !att.deletedAt).length})
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {incident.attachments.map(att => {
+                  const isDeleted = Boolean(att.deletedAt);
+                  if (isDeleted && role !== "Admin") return null;
+
+                  return (
+                    <div 
+                      key={att.id} 
+                      className={cn(
+                        "relative group aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 transition-all",
+                        isDeleted && "opacity-60 grayscale-[40%]"
+                      )}
+                    >
+                      {/* X Delete Button */}
+                      {!isDeleted && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteAttachment(att.id);
+                          }}
+                          className="absolute top-1.5 right-1.5 z-30 p-1.5 rounded-full bg-slate-950/80 text-white hover:bg-rose-600 transition-colors shadow-md cursor-pointer opacity-80 hover:opacity-100"
+                          title="Soft Delete Attachment"
+                        >
+                          <X className="size-3.5 stroke-[2.5]" />
+                        </button>
+                      )}
+
+                      {/* Admin Deleted Badge */}
+                      {isDeleted && (
+                        <span className="absolute top-1.5 left-1.5 z-30 px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow">
+                          Deleted
+                        </span>
+                      )}
+
                       {att.fileType.startsWith('image/') ? (
-                        <a href={att.fileUrl} target="_blank" rel="noreferrer">
+                        <a href={att.fileUrl.startsWith('/uploads/') ? `/api${att.fileUrl}` : att.fileUrl} target="_blank" rel="noreferrer" className="relative block w-full h-full">
                           <Image 
-                            src={att.fileUrl} 
+                            src={att.fileUrl.startsWith('/uploads/') ? `/api${att.fileUrl}` : att.fileUrl} 
                             alt={att.filename} 
                             fill 
                             className="object-cover transition-transform group-hover:scale-105"
@@ -436,7 +459,7 @@ export default function IncidentDetailPage() {
                         </a>
                       ) : (
                         <a 
-                          href={att.fileUrl} 
+                          href={att.fileUrl.startsWith('/uploads/') ? `/api${att.fileUrl}` : att.fileUrl} 
                           target="_blank" 
                           rel="noreferrer"
                           className="flex flex-col items-center justify-center h-full w-full p-2 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-center"
@@ -446,13 +469,16 @@ export default function IncidentDetailPage() {
                         </a>
                       )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
 
+          {/* Action Bar & Discussion Section Container */}
+          <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-6">
             {/* Action Bar (Add Comment) */}
-            <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800/80 flex-wrap">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={() => setShowCommentForm(!showCommentForm)}
@@ -505,66 +531,67 @@ export default function IncidentDetailPage() {
                 </div>
               </form>
             )}
-          </div>
 
-          {/* Clean Platform Discussion & Comments Feed */}
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <MessageSquare className="size-4 text-emerald-500" /> Ticket Activity & Comments ({incident.comments.length})
-              </h3>
-              <span className="text-[11px] text-slate-400">Public Communication</span>
-            </div>
-
-            {incident.comments.length === 0 ? (
-              <div className="p-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 text-xs space-y-2">
-                <MessageSquare className="size-8 mx-auto text-slate-300 dark:text-slate-700" />
-                <p className="font-semibold text-slate-600 dark:text-slate-300">No discussion items yet</p>
-                <p className="text-[11px]">Click &quot;Add Public Comment&quot; above to leave an update or response.</p>
+            {/* Clean Platform Discussion & Comments Feed */}
+            <div className="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <MessageSquare className="size-4 text-emerald-500" /> Ticket Activity & Comments ({incident.comments.length})
+                </h3>
+                <span className="text-[11px] text-slate-400">Public Communication</span>
               </div>
-            ) : (
-              /* Clean Thread Timeline Feed */
-              <div className="relative pl-4 sm:pl-6 space-y-6 before:absolute before:left-2 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-                {incident.comments.map((comment) => (
-                  <div key={comment.id} className="relative flex items-start gap-3 sm:gap-4 group">
-                    
-                    {/* Timeline Avatar Icon */}
-                    <div className="size-7 sm:size-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 ring-4 ring-slate-50 dark:ring-slate-950 shadow-sm z-10">
-                      <User className="size-3.5 sm:size-4" />
-                    </div>
 
-                    {/* Comment Content Card */}
-                    <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 shadow-2xs space-y-2.5 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+              {incident.comments.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 text-xs space-y-2">
+                  <MessageSquare className="size-8 mx-auto text-slate-300 dark:text-slate-700" />
+                  <p className="font-semibold text-slate-600 dark:text-slate-300">No discussion items yet</p>
+                  <p className="text-[11px]">Click &quot;Add Public Comment&quot; above to leave an update or response.</p>
+                </div>
+              ) : (
+                /* Clean Thread Timeline Feed */
+                <div className="relative pl-4 sm:pl-6 space-y-6 before:absolute before:left-2 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+                  {incident.comments.map((comment) => (
+                    <div key={comment.id} className="relative flex items-start gap-3 sm:gap-4 group">
                       
-                      {/* Card Header Bar */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-xs text-slate-900 dark:text-white">
-                            {comment.user?.name ?? "User"}
-                          </span>
-                          
-                          {comment.user?.clientProfile?.companyName && (
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                              {comment.user.clientProfile.companyName}
-                            </span>
-                          )}
-                        </div>
-
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </span>
+                      {/* Timeline Avatar Icon */}
+                      <div className="size-7 sm:size-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 ring-4 ring-slate-50 dark:ring-slate-950 shadow-sm z-10">
+                        <User className="size-3.5 sm:size-4" />
                       </div>
 
-                      {/* Comment Text Body */}
-                      <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                        {comment.body ?? comment.content}
-                      </p>
+                      {/* Comment Content Card */}
+                      <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 shadow-2xs space-y-2.5 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+                        
+                        {/* Card Header Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs text-slate-900 dark:text-white">
+                              {comment.user?.name ?? "User"}
+                            </span>
+                            
+                            {comment.user?.clientProfile?.companyName && (
+                              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                {comment.user.clientProfile.companyName}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Comment Text Body */}
+                        <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                          {comment.body ?? comment.content}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
         </div>
 
         {/* Right Column: TOP-RIGHT INTERNAL NOTES WIDGET (Internal Staff Only - Clean Minimal Design) */}
@@ -759,6 +786,9 @@ export default function IncidentDetailPage() {
                 );
               })()}
             </div>
+
+            {/* Sub-Tasks Checklist Widget (Right Sidebar below Internal Notes) */}
+            <IncidentSubTasksWidget incidentId={Number(incidentId)} />
           </div>
         )}
       </div>

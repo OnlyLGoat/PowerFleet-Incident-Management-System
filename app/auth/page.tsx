@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import SlidingAuth from "@/components/auth/SlidingAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   return (
@@ -24,7 +24,14 @@ export default function AuthPage() {
       {/* Auth Container */}
       <div className="flex-1 flex items-center justify-center p-3 sm:p-6 pt-16 sm:pt-6">
         <div className="w-full max-w-6xl">
-          <SlidingAuth />
+          <Suspense fallback={
+            <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-400">
+              <Loader2 className="size-8 animate-spin text-emerald-500" />
+              <p className="text-xs font-semibold">Loading Auth Portal...</p>
+            </div>
+          }>
+            <SlidingAuth />
+          </Suspense>
         </div>
       </div>
     </div>

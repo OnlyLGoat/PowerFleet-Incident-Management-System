@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import Link from "next/link";
 import { 
   AlertCircle, 
-  ChevronLeft, 
-  ChevronRight, 
   Eye,
-  Edit,
-  Trash2,
-  Loader2
+  Loader2,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
-import InlineDisclosureMenu, { MenuAction } from "@/components/ui/InlineDisclosureMenu";
 import { IncidentListItem, DBTechnician } from "@/types/incident";
 
 interface AdminIncidentTableProps {
@@ -32,7 +29,6 @@ export default function AdminIncidentTable({
   role,
   isClient
 }: AdminIncidentTableProps) {
-  const [page, setPage] = useState(1);
 
   const getPriorityBadgeStyle = (priority: string) => {
     switch (priority) {
@@ -100,100 +96,75 @@ export default function AdminIncidentTable({
                   </td>
                 </tr>
               ) : (
-                incidents.map((item) => {
-                  const menuActions: MenuAction[] = [
-                    { label: "View Incident", icon: Eye, onClick: () => window.location.href = `/incidents/${item.id}` }
-                  ];
+                incidents.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                      #{item.id}
+                    </td>
 
-                  if (isClient) {
-                    menuActions.push({ label: "Edit Details", icon: Edit, onClick: () => console.log("Edit", item.id) });
-                  } else if (role === "Admin" || role === "Support Manager") {
-                    if (role === "Admin") {
-                      menuActions.push({ label: "Delete Ticket", icon: Trash2, onClick: () => console.log("Delete", item.id), destructive: true });
-                    }
-                  }
-
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
-                        #{item.id}
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <p className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">{item.title}</p>
-                        {item.vehicle && (
-                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-                            {item.vehicle.name} ({item.vehicle.licensePlate})
-                          </p>
-                        )}
-                      </td>
-
-                      <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
-                        {item.type}
-                      </td>
-
-                      <td className={cn("py-3.5 px-4 font-medium", getPriorityBadgeStyle(item.priority))}>
-                        {item.priority}
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <span className={cn("px-2.5 py-1 rounded-md text-[11px] font-medium border", getStatusBadgeStyle(item.status))}>
-                          {item.status}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        {role === "ClientUser" ? (
-                          <span className="text-slate-400 italic font-medium text-[11px]">N/A</span>
-                        ) : (
-                          <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
-                            {typeof item.assignedTo === "string" ? item.assignedTo : item.assignedTo?.internalUser?.user?.name || "Unassigned"}
-                          </span>
-                        )}
-                      </td>
-
-                      {(role === "Admin" || role === "Support Manager" || role === "Technician") && (
-                        <td className="py-3.5 px-4">
-                          <SlaBadge status={item.slaStatus ?? "Healthy"} />
-                        </td>
+                    <td className="py-3.5 px-4">
+                      <p className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">{item.title}</p>
+                      {item.vehicle && (
+                        <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                          {item.vehicle.name} ({item.vehicle.licensePlate})
+                        </p>
                       )}
+                    </td>
 
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex justify-end">
-                          <InlineDisclosureMenu actions={menuActions} />
-                        </div>
+                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                      {item.type}
+                    </td>
+
+                    <td className={cn("py-3.5 px-4 font-medium", getPriorityBadgeStyle(item.priority))}>
+                      {item.priority}
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <span className={cn("px-2.5 py-1 rounded-md text-[11px] font-medium border", getStatusBadgeStyle(item.status))}>
+                        {item.status}
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
+                        {typeof item.assignedTo === "string" ? item.assignedTo : item.assignedTo?.internalUser?.user?.name || "Unassigned"}
+                      </span>
+                    </td>
+
+                    {(role === "Admin" || role === "Support Manager" || role === "Technician") && (
+                      <td className="py-3.5 px-4">
+                        <SlaBadge status={item.slaStatus ?? "Healthy"} />
                       </td>
-                    </tr>
-                  );
-                })
+                    )}
+
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        {(role === "Admin" || role === "Support Manager") && (
+                          <Link
+                            href={`/incidents/${item.id}/impact`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white dark:bg-purple-950/40 dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 hover:border-purple-600 transition-all cursor-pointer select-none shadow-2xs"
+                          >
+                            <Zap className="size-3.5" />
+                            <span>Impact</span>
+                          </Link>
+                        )}
+                        <Link
+                          href={`/incidents/${item.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-500 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-500 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all cursor-pointer select-none shadow-2xs"
+                        >
+                          <Eye className="size-3.5" />
+                          <span>View</span>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500">
-        <span>Showing {incidents.length} incident(s)</span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="p-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
-            type="button"
-            disabled
-            onClick={() => setPage((p) => p + 1)}
-            className="p-1 rounded border border-slate-200 dark:border-slate-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

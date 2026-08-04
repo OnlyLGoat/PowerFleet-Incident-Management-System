@@ -54,10 +54,26 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
         } as React.CSSProperties,
         className: 'shadow-xl shadow-emerald-500/5',
       });
+
+      if (newStatus === "In Progress") {
+        window.location.href = `/incidents/${incidentId}/incident-tasks`;
+      }
       
     } catch (err: unknown) {
-      setError("Failed to update status");
+      const errorResponse = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const errorMsg = errorResponse || "Failed to update status";
+      setError(errorMsg);
       console.error(err);
+
+      if (newStatus === "Resolved") {
+        toast.error("Resolution Blocked", {
+          description: errorMsg,
+          action: {
+            label: "Open Checklist",
+            onClick: () => { window.location.href = `/incidents/${incidentId}/incident-tasks`; }
+          }
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -157,21 +173,22 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
             </button>
           )}
 
-          {currentStatus !== "Resolved" && currentStatus !== "Closed" && (
-            <button
-              onClick={() => setShowResolveForm(true)}
-              disabled={loading}
-              className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
-            >
-              <CheckCircle className="size-4" />
-              Resolve Incident
-            </button>
-          )}
+          {/* Incident Sub-Tasks Link */}
+          <a
+            href={`/incidents/${incidentId}/incident-tasks`}
+            className={cn(
+              "py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 active:scale-95 shadow-sm bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100",
+              currentStatus === "In Progress" ? "col-span-2 sm:col-span-1" : "col-span-2 sm:col-span-1"
+            )}
+          >
+            <Clock className="size-4 text-emerald-500" />
+            Manage Sub-Tasks
+          </a>
 
           {/* Hidden File Input */}
           <input
             type="file"
-            accept="image/*"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
             capture="environment"
             ref={fileInputRef}
             onChange={handleFileUpload}

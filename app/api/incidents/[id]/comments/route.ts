@@ -6,7 +6,8 @@ import { withAudit } from "@/lib/utils/audit";
 export const POST = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'POST /incidents/[id]/comments', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         if (Number.isNaN(incidentId)) {
             return NextResponse.json({ error: "Invalid incident ID" }, { status: 400 });
         }

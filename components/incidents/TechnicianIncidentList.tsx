@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertCircle, Clock, MapPin, Truck, ChevronRight, Loader2 } from "lucide-react";
+import { AlertCircle, Clock, MapPin, Truck, Loader2, Eye, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
 import { IncidentListItem } from "@/types/incident";
@@ -11,12 +11,14 @@ interface TechnicianIncidentListProps {
   incidents: IncidentListItem[];
   loading: boolean;
   error: string | null;
+  role?: string;
 }
 
 export default function TechnicianIncidentList({
   incidents,
   loading,
   error,
+  role,
 }: TechnicianIncidentListProps) {
   
   const getPriorityBadgeStyle = (priority: string) => {
@@ -75,10 +77,9 @@ export default function TechnicianIncidentList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {incidents.map((item) => (
-        <Link 
+        <div 
           key={item.id}
-          href={`/incidents/${item.id}`}
-          className="group block bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all hover:border-emerald-500/30 active:scale-[0.98]"
+          className="group block bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all hover:border-slate-300 dark:hover:border-slate-700"
         >
           {/* Header row */}
           <div className="flex items-start justify-between mb-3">
@@ -86,7 +87,7 @@ export default function TechnicianIncidentList({
               <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-1">
                 Ticket #{item.id}
               </span>
-              <h4 className="font-semibold text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              <h4 className="font-semibold text-slate-900 dark:text-white line-clamp-1">
                 {item.title}
               </h4>
             </div>
@@ -121,7 +122,7 @@ export default function TechnicianIncidentList({
           </div>
 
           {/* Footer row */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80 gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border", getStatusBadgeStyle(item.status))}>
                 {item.status}
@@ -131,11 +132,26 @@ export default function TechnicianIncidentList({
               )}
             </div>
             
-            <div className="size-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/50 transition-colors">
-              <ChevronRight className="size-4 text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+            <div className="flex items-center gap-2">
+              {(role === "Admin" || role === "Support Manager") && (
+                <Link
+                  href={`/incidents/${item.id}/impact`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white dark:bg-purple-950/40 dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 hover:border-purple-600 transition-all select-none shadow-2xs"
+                >
+                  <Zap className="size-3.5" />
+                  <span>Impact</span>
+                </Link>
+              )}
+              <Link
+                href={`/incidents/${item.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-500 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-500 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all select-none shadow-2xs"
+              >
+                <Eye className="size-3.5" />
+                <span>View</span>
+              </Link>
             </div>
           </div>
-        </Link>
+        </div>
       ))}
     </div>
   );

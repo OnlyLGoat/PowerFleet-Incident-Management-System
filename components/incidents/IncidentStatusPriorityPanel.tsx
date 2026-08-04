@@ -40,14 +40,22 @@ export default function IncidentStatusPriorityPanel({
 
   const handleApplyChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (!updateMessage.trim()) {
+      const msgErr = "Reason/message is required when changing status or priority.";
+      setError(msgErr);
+      toast.error(msgErr);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const payload: Record<string, string> = {
         status: selectedStatus,
         priority: selectedPriority,
-        message: updateMessage.trim() || `Updated status to ${selectedStatus} and priority to ${selectedPriority}`,
+        message: updateMessage.trim(),
       };
 
       await axios.patch(`/api/incidents/${incidentId}`, payload);
@@ -63,10 +71,12 @@ export default function IncidentStatusPriorityPanel({
         className: "shadow-xl shadow-emerald-500/5",
       });
 
+      setUpdateMessage("");
       onUpdate();
     } catch (err: unknown) {
       console.error("Failed to update status/priority:", err);
-      setError("Failed to update incident controls. Ensure you have proper permissions.");
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e.response?.data?.error || "Failed to update incident controls.");
     } finally {
       setLoading(false);
     }
@@ -146,12 +156,16 @@ export default function IncidentStatusPriorityPanel({
 
         {/* Reason / Audit Note Input */}
         <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Reason / Update Note <span className="text-rose-500">*</span>
+          </label>
           <input
             type="text"
-            placeholder="Audit log note / reason for update..."
+            placeholder="Audit log note / reason for update (Required)..."
             value={updateMessage}
             onChange={(e) => setUpdateMessage(e.target.value)}
             className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            required
           />
         </div>
 

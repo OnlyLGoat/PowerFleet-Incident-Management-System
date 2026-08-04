@@ -134,13 +134,13 @@ The system features an automated Service Level Agreement (SLA) calculation engin
 ### SLA Status States
 1.  **Healthy:** Time remaining on pending milestone is above the warning thresholds.
 2.  **Warning_Response:** Response is pending with warning time remaining.
-3.  **Breached_Response:** Response deadline missed; resolution is still within limits.
+3.  **Overdue_Response:** Response deadline missed; resolution is still within limits.
 4.  **Warning_Resolution:** Response was met on time; resolution is pending with warning time remaining.
-5.  **Breached_Resolution:** Response was met on time; resolution deadline missed.
-6.  **Breached_Both:** Both response and resolution deadlines missed.
+5.  **Overdue_Resolution:** Response was met on time; resolution deadline missed.
+6.  **Overdue_Both:** Both response and resolution deadlines missed.
 7.  **Met:** Both response and resolution limits successfully met on time.
-8.  **Met_With_Response_Breached:** Response deadline missed, but resolution met on time.
-9.  **Met_With_Resolution_Breached:** Response met on time, but resolution deadline missed.
+8.  **Met_With_Response_Overdue:** Response deadline missed, but resolution met on time.
+9.  **Met_With_Resolution_Overdue:** Response met on time, but resolution deadline missed.
 
 ---
 
@@ -191,7 +191,7 @@ Supports robust search queries dynamically built by Drizzle:
 - `?status=Open,Resolved`
 - `?priority=High,Critical`
 - `?type=GPS Device,Vehicle`
-- `?slaStatus=Breached_Both,Warning_Response` (Internal Users only)
+- `?slaStatus=Overdue_Both,Warning_Response` (Internal Users only)
 - `?dateFrom=` & `?dateTo=` (ISO Strings)
 
 ### Vehicles

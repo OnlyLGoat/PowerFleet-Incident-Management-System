@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
 import { 
   Search, 
@@ -12,7 +13,9 @@ import {
   LayoutGrid,
   Loader2,
   Filter,
-  Flame
+  Flame,
+  ArrowUp,
+  Rows3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AdminIncidentTable from "@/components/incidents/AdminIncidentTable";
@@ -51,6 +54,12 @@ function IncidentsContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination & Display States
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSizeInput, setPageSizeInput] = useState<string>("10");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+
   // View Mode: Table vs Cards (Default: Cards for Technician, Table for others)
   const [viewMode, setViewMode] = useState<"table" | "cards">(isTechnician ? "cards" : "table");
 
@@ -58,12 +67,29 @@ function IncidentsContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
-  const [userToggleMyTickets, setUserToggleMyTickets] = useState<boolean | null>(
-    myTicketsParam === "true" ? true : null
-  );
-
   // Derived filter state
-  const myTicketsOnly = userToggleMyTickets ?? (myTicketsParam === "true" || isTechnician);
+  const myTicketsOnly = myTicketsParam === "true" || isTechnician;
+
+  // Adjust page number when filters change
+  const currentFilterKey = `${search}-${statusFilter}-${priorityFilter}-${myTicketsOnly}-${pageSize}`;
+  const [prevFilterKey, setPrevFilterKey] = useState<string>(currentFilterKey);
+  if (currentFilterKey !== prevFilterKey) {
+    setPrevFilterKey(currentFilterKey);
+    setCurrentPage(1);
+  }
+
+  // Scroll to top listener
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Live Fetching Incidents & DB Technicians
   useEffect(() => {
@@ -111,34 +137,20 @@ function IncidentsContent() {
     return assignedName.toLowerCase().includes(user.name.toLowerCase()) || isTechnician;
   });
 
+  // Calculate Paginated Subset
+  const totalIncidentsCount = filteredIncidents.length;
+  const totalPages = Math.max(1, Math.ceil(totalIncidentsCount / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalIncidentsCount);
+  const paginatedIncidents = filteredIncidents.slice(startIndex, endIndex);
+
   return (
-    <div className="space-y-6">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Incidents
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Manage, filter, and track all fleet incidents in real time.
-          </p>
-        </div>
-
-        {isClient && (
-          <Link
-            href="/incidents/new"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm cursor-pointer select-none"
-          >
-            <Plus className="size-4" />
-            <span>New Incident</span>
-          </Link>
-        )}
-      </div>
-
-      {/* 2. Filter & Search Controls Toolbar */}
+    <div className="space-y-6 relative">
+      {/* Filter & Search Controls Toolbar */}
       <div className="space-y-3 bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         
-        {/* Top Row: Search Input + View Mode Switcher Toggle */}
+        {/* Top Row: Search Input + Action Controls + View Mode Switcher Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Search Bar Input */}
           <div className="relative flex-1">
@@ -153,21 +165,17 @@ function IncidentsContent() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* My Tickets Toggle Button for Internal Users */}
-            {(!isClient) && (
-              <button
-                type="button"
-                onClick={() => setUserToggleMyTickets(!myTicketsOnly)}
-                className={cn(
-                  "px-3 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none",
-                  myTicketsOnly
-                    ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
-                    : "bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
+            {isClient && (
+              <Link
+                href="/incidents/new"
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm cursor-pointer select-none whitespace-nowrap"
               >
-                <span>{myTicketsOnly ? "Showing My Tickets" : "All Fleet Tickets"}</span>
-              </button>
+                <Plus className="size-4" />
+                <span>New Incident</span>
+              </Link>
             )}
+
+
 
             {/* Table / Cards View Switcher Toggle */}
             <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
@@ -203,55 +211,70 @@ function IncidentsContent() {
           </div>
         </div>
 
-        {/* Bottom Row: Restored Status & Priority Pill Filter Buttons */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        {/* Bottom Row: Status Dropdown, Priority Dropdown & Items Per Page Selector */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
           
-          {/* Status Filter Buttons */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
-              <Filter className="size-3" /> Status:
-            </span>
-            {STATUS_FILTERS.map((st) => (
-              <button
-                key={st.key}
-                type="button"
-                onClick={() => setStatusFilter(st.key)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer select-none",
-                  statusFilter === st.key
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 border-slate-900 dark:border-white shadow-sm"
-                    : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Status Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Filter className="size-3" /> Status:
+              </span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer select-none"
               >
-                {st.label}
-              </button>
-            ))}
+                {STATUS_FILTERS.map((st) => (
+                  <option key={st.key} value={st.key}>
+                    {st.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Flame className="size-3 text-amber-500" /> Priority:
+              </span>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer select-none"
+              >
+                {PRIORITY_FILTERS.map((pr) => (
+                  <option key={pr.key} value={pr.key}>
+                    {pr.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Priority Filter Buttons */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
-              <Flame className="size-3 text-amber-500" /> Priority:
+          {/* Items Per Page Numeric Input */}
+          <div className="flex items-center gap-2">
+            <Rows3 className="size-3.5 text-slate-400" />
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Show:
             </span>
-            {PRIORITY_FILTERS.map((pr) => (
-              <button
-                key={pr.key}
-                type="button"
-                onClick={() => setPriorityFilter(pr.key)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer select-none",
-                  priorityFilter === pr.key
-                    ? pr.key === "Critical"
-                      ? "bg-rose-600 text-white border-rose-600 shadow-sm"
-                      : pr.key === "High"
-                      ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                      : "bg-slate-900 dark:bg-white text-white dark:text-slate-950 border-slate-900 dark:border-white shadow-sm"
-                    : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                {pr.label}
-              </button>
-            ))}
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={pageSizeInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPageSizeInput(val);
+                  const parsed = parseInt(val, 10);
+                  if (!Number.isNaN(parsed) && parsed > 0) {
+                    setPageSize(parsed);
+                  }
+                }}
+                className="w-16 px-2.5 py-1.5 rounded-xl text-xs font-bold text-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-emerald-500 transition-all"
+              />
+            </div>
           </div>
 
         </div>
@@ -261,13 +284,14 @@ function IncidentsContent() {
       {/* 3. Render View Based on View Mode (Table vs Cards) */}
       {viewMode === "cards" ? (
         <TechnicianIncidentList 
-          incidents={filteredIncidents}
+          incidents={paginatedIncidents}
           loading={loading}
           error={error}
+          role={role || ""}
         />
       ) : (
         <AdminIncidentTable 
-          incidents={filteredIncidents}
+          incidents={paginatedIncidents}
           loading={loading}
           error={error}
           role={role || ""}
@@ -276,6 +300,67 @@ function IncidentsContent() {
           setIncidents={setIncidents}
         />
       )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Showing <span className="text-slate-900 dark:text-slate-100 font-bold">{startIndex + 1}</span> to <span className="text-slate-900 dark:text-slate-100 font-bold">{endIndex}</span> of <span className="text-slate-900 dark:text-slate-100 font-bold">{totalIncidentsCount}</span> incidents
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              Prev
+            </button>
+            
+            <div className="flex items-center gap-1 overflow-x-auto max-w-[200px] sm:max-w-none no-scrollbar">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border cursor-pointer",
+                    safeCurrentPage === pageNum 
+                      ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-500/20" 
+                      : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  )}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Smooth Floating Back-to-Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            transition={{ duration: 0.2, type: "spring", stiffness: 300, damping: 25 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Scroll back to top"
+            title="Scroll to Top"
+            className="fixed bottom-7 right-7 z-50 flex size-11 items-center justify-center rounded-full bg-emerald-500 text-white shadow-2xl hover:bg-emerald-600 hover:scale-110 active:scale-95 transition-all border border-emerald-400/40 cursor-pointer"
+          >
+            <ArrowUp className="size-5 stroke-[2.5]" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "@/components/theme-provider";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Search, 
-  Bell, 
   Sun, 
   Moon, 
   LogOut, 
-  ShieldCheck, 
   User, 
   Building2, 
   ChevronDown,
@@ -24,28 +21,61 @@ import { cn } from "@/lib/utils";
 export interface HeaderProps {
   /** Optional current page or section title */
   title?: string;
-  /** Search query state */
-  searchQuery?: string;
-  /** Callback fired when user types in search input */
-  onSearchChange?: (query: string) => void;
-  /** Unread notification count */
-  unreadNotificationsCount?: number;
+}
+
+function getRouteTitle(pathname: string): string {
+  if (!pathname || pathname === "/") return "Home";
+  if (pathname === "/incidents/dashboard") return "Dashboard";
+  if (pathname === "/incidents") return "Incidents";
+  if (pathname === "/incidents/new") return "New Incident";
+  if (pathname === "/vehicles") return "Vehicles Management";
+  if (pathname === "/users") return "User Accounts";
+
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] === "incidents" && parts[1]) {
+    const rawId = parts[1].replace(/^INC-/i, "");
+    if (!Number.isNaN(Number(rawId))) {
+      if (parts[2] === "incident-tasks") {
+        return `Ticket #${rawId} Sub-Tasks`;
+      }
+      if (parts[2] === "impact") {
+        return `Ticket #${rawId} Operational Impact`;
+      }
+      return `Ticket #${rawId}`;
+    }
+  }
+
+  const lastSegment = parts[parts.length - 1] || "Workspace";
+  return lastSegment.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function Header({
-  title = "Overview",
-  searchQuery = "",
-  onSearchChange,
-  unreadNotificationsCount = 3,
+  title,
 }: Readonly<HeaderProps>) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, role } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
 
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen]);
+
+  const activeTitle = title && title !== "Overview" ? title : getRouteTitle(pathname);
 
   // Handle Logout Execution
   const handleLogout = async () => {
@@ -75,7 +105,7 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl transition-colors">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+      <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
         
         {/* 1. Left Section: Logo & Page Title */}
         <div className="flex items-center gap-6">
@@ -94,28 +124,11 @@ export default function Header({
 
           {/* Dynamic Active Section Title */}
           <h1 className="text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-300 capitalize">
-            {title}
+            {activeTitle}
           </h1>
         </div>
 
-        {/* 2. Center Section: Global Command Search Bar */}
-        <div className="relative flex-1 max-w-md hidden md:block">
-          <div className="relative flex items-center">
-            <Search className="absolute left-3.5 size-4 text-slate-400 dark:text-slate-500" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              placeholder="Search incidents, vehicles, IMEIs... (Press ⌘K)"
-              className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-900/60 py-1.5 pl-10 pr-12 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 dark:focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
-            />
-            <kbd className="absolute right-3 pointer-events-none hidden select-none items-center gap-1 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-1.5 font-mono text-[10px] font-medium text-slate-400 sm:flex">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
-
-        {/* 3. Right Section: Controls & Profile Menu */}
+        {/* 2. Right Section: Controls & Profile Menu */}
         <div className="flex items-center gap-3">
 
           {/* Theme Switcher Button */}
@@ -129,58 +142,8 @@ export default function Header({
             <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </button>
 
-          {/* Notification Bell */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="relative flex size-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-slate-950 shadow-sm animate-pulse">
-                  {unreadNotificationsCount}
-                </span>
-              )}
-            </button>
-
-            {/* Notifications Popover */}
-            <AnimatePresence>
-              {isNotificationsOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                      Notifications
-                    </span>
-                    <span className="text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      {unreadNotificationsCount} Unread
-                    </span>
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                      <p className="font-semibold text-slate-900 dark:text-slate-200">SLA Warning: Ticket #104</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Response window expires in 15 mins.</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                      <p className="font-semibold text-slate-900 dark:text-slate-200">New Incident Logged</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Vehicle RAM-402 reported GPS offline.</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-
           {/* User Profile Dropdown Menu */}
-          <div className="relative">
+          <div ref={profileRef} className="relative">
             <button
               type="button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -229,19 +192,7 @@ export default function Header({
                     )}
                   </div>
 
-                  {/* Menu Action Items */}
-                  <div className="space-y-0.5 p-1">
-                    <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer">
-                      <User className="size-3.5 text-slate-400" />
-                      <span>Account Profile</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer">
-                      <ShieldCheck className="size-3.5 text-slate-400" />
-                      <span>Security & Sessions</span>
-                    </div>
-                  </div>
 
-                  <div className="h-px bg-slate-100 dark:bg-slate-800/80 my-1" />
 
                   {/* Logout Button */}
                   <button

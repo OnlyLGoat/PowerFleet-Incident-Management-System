@@ -15,9 +15,9 @@ function createZeroStatsResponse() {
     resolved: 0,
     vehiclesCount: 0,
     slaWarnings: 0,
-    slaBreached: 0,
+    slaOverdue: 0,
     categoryDistribution: [],
-    dailySlaBreakdown: days.map(day => ({ day, healthy: 0, warning: 0, breached: 0 })),
+    dailySlaBreakdown: days.map(day => ({ day, healthy: 0, warning: 0, overdue: 0 })),
     dailyCategoryBreakdown: days.map(day => ({ day, gps: 0, vehicle: 0, fuel: 0, accident: 0 })),
     dailyStatusBreakdown: days.map(day => ({ day, open: 0, inProgress: 0, resolved: 0 })),
     recentIncidents: [],
@@ -25,10 +25,10 @@ function createZeroStatsResponse() {
   });
 }
 
-function processSlaBreakdown(sla: string | null, dayName: string, map: Record<string, { healthy: number; warning: number; breached: number }>) {
+function processSlaBreakdown(sla: string | null, dayName: string, map: Record<string, { healthy: number; warning: number; overdue: number }>) {
   const status = sla || "Healthy";
-  if (status.startsWith("Breached")) {
-    map[dayName].breached += 1;
+  if (status.startsWith("Overdue")) {
+    map[dayName].overdue += 1;
   } else if (status.startsWith("Warning")) {
     map[dayName].warning += 1;
   } else {
@@ -139,13 +139,13 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
           )
         );
 
-      const [slaBreachedResult] = await db
+      const [slaOverdueResult] = await db
         .select({ count: count() })
         .from(incidents)
         .where(
           and(
             baseFilter,
-            inArray(incidents.slaStatus, ["Breached_Response", "Breached_Resolution", "Breached_Both"])
+            inArray(incidents.slaStatus, ["Overdue_Response", "Overdue_Resolution", "Overdue_Both"])
           )
         );
 
@@ -172,14 +172,14 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
 
       const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       
-      const dailySlaMap: Record<string, { healthy: number; warning: number; breached: number }> = {
-        Mon: { healthy: 0, warning: 0, breached: 0 },
-        Tue: { healthy: 0, warning: 0, breached: 0 },
-        Wed: { healthy: 0, warning: 0, breached: 0 },
-        Thu: { healthy: 0, warning: 0, breached: 0 },
-        Fri: { healthy: 0, warning: 0, breached: 0 },
-        Sat: { healthy: 0, warning: 0, breached: 0 },
-        Sun: { healthy: 0, warning: 0, breached: 0 },
+      const dailySlaMap: Record<string, { healthy: number; warning: number; overdue: number }> = {
+        Mon: { healthy: 0, warning: 0, overdue: 0 },
+        Tue: { healthy: 0, warning: 0, overdue: 0 },
+        Wed: { healthy: 0, warning: 0, overdue: 0 },
+        Thu: { healthy: 0, warning: 0, overdue: 0 },
+        Fri: { healthy: 0, warning: 0, overdue: 0 },
+        Sat: { healthy: 0, warning: 0, overdue: 0 },
+        Sun: { healthy: 0, warning: 0, overdue: 0 },
       };
 
       const dailyCatMap: Record<string, { gps: number; vehicle: number; fuel: number; accident: number }> = {
@@ -216,7 +216,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
         day,
         healthy: dailySlaMap[day].healthy,
         warning: dailySlaMap[day].warning,
-        breached: dailySlaMap[day].breached,
+        overdue: dailySlaMap[day].overdue,
       }));
 
       const dailyCategoryBreakdown = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({
@@ -341,7 +341,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
         resolved: resolvedResult?.resolved ?? 0,
         vehiclesCount: clientVehicleIds.length,
         slaWarnings: slaWarningResult?.count ?? 0,
-        slaBreached: slaBreachedResult?.count ?? 0,
+        slaOverdue: slaOverdueResult?.count ?? 0,
         categoryDistribution: categoryRows.map((r) => ({
           category: r.category,
           count: Number(r.count),
