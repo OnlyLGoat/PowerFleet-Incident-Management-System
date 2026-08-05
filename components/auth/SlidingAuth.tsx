@@ -148,22 +148,6 @@ export default function SlidingAuth() {
             alt="Abstract wavy gradient"
             className="absolute inset-0 h-full w-full object-cover opacity-80"
           />
-          {/* Logo overlay */}
-          <div className="absolute top-8 left-8 z-20 flex flex-col">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.jpg"
-                alt="PowerFleet Logo"
-                className="size-10 rounded-xl object-cover shadow-lg border border-white/20"
-              />
-              <h2 className="text-3xl font-extrabold text-white tracking-tighter drop-shadow-md">
-                POWER FLEET <span className="text-emerald-400">IMS</span>
-              </h2>
-            </div>
-            <p className="text-white/80 font-medium mt-1 drop-shadow-md">
-              Next-generation fleet management.
-            </p>
-          </div>
         </div>
       </motion.div>
 

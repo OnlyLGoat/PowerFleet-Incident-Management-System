@@ -56,7 +56,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
       });
 
       if (newStatus === "In Progress") {
-        window.location.href = `/incidents/${incidentId}/incident-tasks`;
+        onUpdate();
       }
       
     } catch (err: unknown) {
@@ -68,10 +68,6 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
       if (newStatus === "Resolved") {
         toast.error("Resolution Blocked", {
           description: errorMsg,
-          action: {
-            label: "Open Checklist",
-            onClick: () => { window.location.href = `/incidents/${incidentId}/incident-tasks`; }
-          }
         });
       }
     } finally {
@@ -173,17 +169,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
             </button>
           )}
 
-          {/* Incident Sub-Tasks Link */}
-          <a
-            href={`/incidents/${incidentId}/incident-tasks`}
-            className={cn(
-              "py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 active:scale-95 shadow-sm bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100",
-              currentStatus === "In Progress" ? "col-span-2 sm:col-span-1" : "col-span-2 sm:col-span-1"
-            )}
-          >
-            <Clock className="size-4 text-emerald-500" />
-            Manage Sub-Tasks
-          </a>
+
 
           {/* Hidden File Input */}
           <input

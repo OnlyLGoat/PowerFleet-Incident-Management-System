@@ -22,6 +22,17 @@ import {
   RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   id: number;
@@ -206,7 +217,6 @@ export default function UsersManagementPage() {
   };
 
   const handleDeleteUser = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to soft-delete user account "${name}"?`)) return;
 
     try {
       await axios.delete(`/api/users/${id}`);
@@ -553,14 +563,31 @@ export default function UsersManagementPage() {
                             >
                               <Edit3 className="size-4" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteUser(u.id, u.name)}
-                              className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                              title="Soft Delete User"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger
+                                className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Soft Delete User"
+                              >
+                                <Trash2 className="size-4" />
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to soft-delete user account &quot;{u.name}&quot;?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteUser(u.id, u.name)}
+                                    className="bg-rose-600 hover:bg-rose-700 text-white"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </>
                         )}
                       </div>

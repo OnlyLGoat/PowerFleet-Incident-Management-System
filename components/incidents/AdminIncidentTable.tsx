@@ -1,15 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { 
   AlertCircle, 
   Eye,
   Loader2,
-  Zap
+  Zap,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SlaBadge from "@/components/ui/SlaBadge";
+import IncidentReportModal from "@/components/ui/IncidentReportModal";
 import { IncidentListItem, DBTechnician } from "@/types/incident";
 
 interface AdminIncidentTableProps {
@@ -29,6 +31,7 @@ export default function AdminIncidentTable({
   role,
   isClient
 }: AdminIncidentTableProps) {
+  const [selectedReportIncident, setSelectedReportIncident] = useState<{ id: number; title: string } | null>(null);
 
   const getPriorityBadgeStyle = (priority: string) => {
     switch (priority) {
@@ -140,13 +143,25 @@ export default function AdminIncidentTable({
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex justify-end items-center gap-2">
                         {(role === "Admin" || role === "Support Manager") && (
-                          <Link
-                            href={`/incidents/${item.id}/impact`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white dark:bg-purple-950/40 dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 hover:border-purple-600 transition-all cursor-pointer select-none shadow-2xs"
-                          >
-                            <Zap className="size-3.5" />
-                            <span>Impact</span>
-                          </Link>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReportIncident({ id: item.id, title: item.title })}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 hover:text-white dark:bg-indigo-950/40 dark:hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200 dark:border-indigo-800 hover:border-indigo-600 transition-all cursor-pointer select-none shadow-2xs"
+                              title="Generate Executive Incident Report"
+                            >
+                              <FileText className="size-3.5" />
+                              <span>Report</span>
+                            </button>
+
+                            <Link
+                              href={`/incidents/${item.id}/impact`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white dark:bg-purple-950/40 dark:hover:bg-purple-600 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 hover:border-purple-600 transition-all cursor-pointer select-none shadow-2xs"
+                            >
+                              <Zap className="size-3.5" />
+                              <span>Impact</span>
+                            </Link>
+                          </>
                         )}
                         <Link
                           href={`/incidents/${item.id}`}
@@ -165,6 +180,14 @@ export default function AdminIncidentTable({
         </table>
       </div>
 
+      {selectedReportIncident && (
+        <IncidentReportModal
+          isOpen={selectedReportIncident !== null}
+          onClose={() => setSelectedReportIncident(null)}
+          incidentId={selectedReportIncident.id}
+          incidentTitle={selectedReportIncident.title}
+        />
+      )}
     </div>
   );
 }

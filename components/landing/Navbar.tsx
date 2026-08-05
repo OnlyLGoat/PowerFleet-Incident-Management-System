@@ -32,11 +32,8 @@ export default function Navbar() {
           <img
             src="/logo.jpg"
             alt="PowerFleet Logo"
-            className="size-9 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform border border-slate-200/50 dark:border-slate-800/50"
+            className="h-10 w-auto rounded-xl object-contain shadow-md group-hover:scale-105 transition-transform border border-slate-200/50 dark:border-slate-800/50"
           />
-          <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-            Power Fleet <span className="text-emerald-500">IMS</span>
-          </span>
         </Link>
 
         {/* Login Action */}

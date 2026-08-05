@@ -3,6 +3,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { 
   Car, 
@@ -165,7 +176,6 @@ export default function VehiclesPage() {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete vehicle "${name}"?`)) return;
 
     try {
       await axios.delete(`/api/vehicles/${id}`);
@@ -399,14 +409,31 @@ export default function VehiclesPage() {
                             >
                               <Edit3 className="size-4" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(v.id, v.name)}
-                              className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                              title="Delete Vehicle"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger
+                                className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Delete Vehicle"
+                              >
+                                <Trash2 className="size-4" />
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Vehicle?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete vehicle &quot;{v.name}&quot;?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(v.id, v.name)}
+                                    className="bg-rose-600 hover:bg-rose-700 text-white"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </>
                         )}
                       </div>

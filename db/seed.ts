@@ -143,236 +143,178 @@ async function seed() {
     vehicleIds.push(veh.id);
   }
 
-  console.log("⚠️ Creating Fleet Incidents...");
+  console.log("⚠️ Creating Fleet Incidents (6 incidents, 3 similar pairs)...");
+  const baseTime = Date.now();
+
   const incidentList: Array<typeof schema.incidents.$inferInsert> = [
+    // --- PAIR 1: GPS & Telematics Signal Loss ---
     {
-      title: "GPS Tracking Signal Lost in Transit",
+      // INC-001 (Resolved Past Ticket)
+      title: "GPS Telematics Unit Complete Cellular & Satellite Disconnection",
       description: `INCIDENT SUMMARY:
-During scheduled interstate cargo transport on I-95 North, telematics unit #867543091827364 experienced a complete loss of cellular telemetry connection at 10:42 AM EST.
+During interstate cargo transport on I-95 North, telematics unit #86754309 experienced a total loss of cellular telemetry and GPS location pings at Mile Marker 42.
 
-INITIAL OBSERVATIONS & TELEMETRY DIAGNOSTICS:
-• Primary GPS receiver stopped pinging server at Mile Marker 42 (Philadelphia region).
-• Last recorded speed was 68 mph before sudden disconnection.
-• Backup satellite heartbeat failed to trigger within the 5-minute failover threshold.
+DIAGNOSTIC FINDINGS & ROOT CAUSE:
+• Primary GPS receiver stopped pinging server due to oxidized coaxial antenna connector pin and loose wiring harness behind dashboard.
+• Cellular telemetry signal frequency dropped to 0 dBm.
 
-REQUIRED ACTION & TECHNICAL STEPS:
-1. Field technician assigned to verify physical cable harness and antenna mount integrity.
-2. Execute remote firmware diagnostic boot sequence upon re-establishing local cellular link.
-3. Calibrate signal frequency and log full system diagnostic report.`,
+PROVEN RESOLUTION & REPAIR STEPS:
+1. Replaced RG-58 antenna coaxial cable and cleaned chassis ground terminal.
+2. Re-seated SMA connector and performed remote diagnostic reboot.
+3. Restored signal strength to 100% capacity.`,
       type: "GPS Device",
       priority: "Critical",
-      status: "In Progress",
+      status: "Resolved",
       address: "I-95 North, Mile Marker 42, Philadelphia, PA",
       latitude: 39.9526,
       longitude: -75.1652,
-      slaStatus: "Healthy",
+      slaStatus: "Met",
+      resolvedAt: new Date(baseTime - 5 * 24 * 60 * 60 * 1000),
+      resolutionNote: "Replaced RG-58 antenna coaxial cable, cleaned grounding points, and re-seated SMA connector.",
       clientId: clientUserIds[0],
       vehicleId: vehicleIds[0],
       reportedById: clientUserIds[0],
       assignedToId: techInternalIds[0],
     },
     {
-      title: "Fuel Sensor Anomaly & Sudden Drop Reading",
+      // INC-002 (In Progress - Similar to INC-001)
+      title: "Telematics Unit Signal Loss & GPS Disconnection on I-95",
       description: `INCIDENT SUMMARY:
-The fleet monitoring system flagged an alarming fuel anomaly at 08:15 AM EST. Fuel probe reading plummeted from 85% capacity down to 12% in less than 3 minutes, despite no physical leak alarms being registered by environmental sensors.
+During scheduled cargo transit on I-95 North near Mile Marker 45, telematics unit lost all cellular telemetry connection and GPS location tracking.
 
-TECHNICAL INVESTIGATION NOTES:
-• Vehicle was idling at Port Newark Container Terminal during cargo staging.
-• Fuel flow rate sensor indicates normal injector consumption (0.8 gal/hr).
-• Electrical telemetry voltage on CAN-bus line B dropped from 5.0V to 0.2V flat line, indicating sensor grounding short circuit or hardware component failure.
-
-NEXT STEPS:
-Dispatched field specialist Marcus Vance to inspect probe wiring, test analog output voltage, and replace probe hardware if voltage short is confirmed.`,
-      type: "Fuel",
-      priority: "High",
-      status: "Open",
-      address: "Port Newark Container Terminal, Newark, NJ",
-      latitude: 40.6892,
-      longitude: -74.1687,
-      slaStatus: "Warning_Resolution",
+OBSERVATIONS:
+• Telemetry pings halted suddenly while vehicle was traveling at 65 mph.
+• Diagnostic readings show 0 dBm signal voltage, indicating potential oxidized antenna cable connector or loose wiring harness.
+• Field technician required to inspect antenna cabling and reset unit.`,
+      type: "GPS Device",
+      priority: "Critical",
+      status: "In Progress",
+      address: "I-95 North, Mile Marker 45, Philadelphia, PA",
+      latitude: 39.9550,
+      longitude: -75.1600,
+      slaStatus: "Healthy",
       clientId: clientUserIds[0],
       vehicleId: vehicleIds[1],
       reportedById: clientUserIds[0],
-      assignedToId: techInternalIds[2],
+      assignedToId: techInternalIds[0],
     },
+
+    // --- PAIR 2: Fuel Sensor Anomaly & Short Circuit ---
     {
-      title: "Engine Check Indicator & Loss of Acceleration",
-      description: `INCIDENT DETAILED REPORT:
-While ascending Route 7 West incline carrying 14.2 tons of dry freight, driver reported sudden engine light activation accompanied by a noticeable reduction in engine torque output. The vehicle ECU automatically defaulted to Limp-Home Mode.
+      // INC-003 (Resolved Past Ticket)
+      title: "Fuel Level Sensor Telemetry Drop & Short Circuit",
+      description: `INCIDENT SUMMARY:
+Fuel probe sensor reading abruptly dropped from 85% capacity down to 10% in under 2 minutes at Newark Container Terminal.
 
-ECU FAULT CODES & DIAGNOSTIC SCAN:
-• OBD-II Diagnostic Scan: P0300 (Random/Multiple Cylinder Misfire Detected).
-• Engine Coolant Temp: 92°C (Normal operational range).
-• Turbo Boost Pressure: Dropped from 22 PSI to 6 PSI during acceleration load.
+DIAGNOSTIC FINDINGS & ROOT CAUSE:
+• Physical inspection revealed CAN-bus Line B grounding short circuit (voltage dropped from 5.0V to 0.2V flat line).
+• No actual fuel leakage; sensor probe wire harness was pinched against engine frame.
 
-FIELD RECOMMENDATIONS:
-Technician Elena Rostova instructed to inspect ignition coils, fuel injector delivery pressure, and check intake manifold hose connections before approving vehicle return to active service.`,
-      type: "Vehicle",
+PROVEN RESOLUTION & REPAIR STEPS:
+1. Replaced fuel level probe wire harness and insulated CAN-bus line B.
+2. Cleaned grounding terminal bolt and cleared sensor fault code in ECU.
+3. Verified stable 5.0V telemetry output.`,
+      type: "Fuel",
       priority: "High",
-      status: "In Progress",
-      address: "Route 7 West, Alexandria, VA",
-      latitude: 38.8048,
-      longitude: -77.0469,
-      slaStatus: "Healthy",
+      status: "Resolved",
+      address: "Port Newark Container Terminal, Newark, NJ",
+      latitude: 40.6892,
+      longitude: -74.1687,
+      slaStatus: "Met",
+      resolvedAt: new Date(baseTime - 8 * 24 * 60 * 60 * 1000),
+      resolutionNote: "Replaced fuel level probe wire harness, insulated CAN-bus line B, cleaned grounding terminal.",
       clientId: clientUserIds[1],
       vehicleId: vehicleIds[2],
       reportedById: clientUserIds[1],
-      assignedToId: techInternalIds[1],
+      assignedToId: techInternalIds[2],
     },
     {
-      title: "Refrigeration Unit Temperature Spike",
-      description: `URGENT COLD CHAIN ALERT:
-Refrigerated trailer R-09 temperature sensor recorded a thermal deviation, rising from target setpoint (-18°C) to +8°C within a 45-minute delivery window.
+      // INC-004 (In Progress - Similar to INC-003)
+      title: "Sudden Fuel Level Telemetry Drop & Voltage Failure",
+      description: `INCIDENT SUMMARY:
+The fleet monitoring portal flagged an instant fuel telemetry drop from 90% to 12% while idling at Newark Port.
 
-CARGO RISKS & ENVIRONMENTAL STATS:
-• Cargo Type: High-value perishable pharmaceuticals requiring strict +2°C max threshold.
-• Compressor status: Running, but condenser fan RPM dropped by 65% due to belt slippage.
-• Ambient outside temperature: 31°C.
-
-IMMEDIATE EMERGENCY PROTOCOL:
-Vehicle directed to nearest cold storage facility at Distribution Center 4. Emergency backup cooling unit activated pending technician dispatch.`,
-      type: "Maintenance",
-      priority: "Critical",
-      status: "New",
-      address: "Distribution Center 4, Baltimore, MD",
-      latitude: 39.2904,
-      longitude: -76.6122,
-      slaStatus: "Warning_Response",
+OBSERVATIONS:
+• Engine fuel consumption rates remain completely normal with zero physical fuel leaks.
+• CAN-bus line voltage dropped down to 0.2V flat line, suspecting fuel probe wire harness short circuit or grounding fault.
+• Technician assigned to test analog output voltage and probe wiring.`,
+      type: "Fuel",
+      priority: "High",
+      status: "In Progress",
+      address: "Port Newark Container Terminal, Newark, NJ",
+      latitude: 40.6900,
+      longitude: -74.1700,
+      slaStatus: "Warning_Resolution",
       clientId: clientUserIds[1],
       vehicleId: vehicleIds[3],
       reportedById: clientUserIds[1],
-      assignedToId: null,
+      assignedToId: techInternalIds[2],
+    },
+
+    // --- PAIR 3: Hydraulic Brake Pressure Loss & Fluid Leak ---
+    {
+      // INC-005 (Resolved Past Ticket)
+      title: "Hydraulic Brake Pressure Warning & Master Cylinder Fitting Leak",
+      description: `INCIDENT SUMMARY:
+Brake system low pressure warning alert activated on vehicle dashboard with brake line pressure dropping below 40 PSI threshold.
+
+DIAGNOSTIC FINDINGS & ROOT CAUSE:
+• Found hydraulic brake fluid leak near master cylinder fitting due to worn O-ring seal.
+• Driver reported soft brake pedal travel and reduced braking efficiency.
+
+PROVEN RESOLUTION & REPAIR STEPS:
+1. Replaced master cylinder hydraulic line fitting and dual O-ring seals.
+2. Flushed brake fluid system and refilled with DOT-4 heavy duty brake fluid.
+3. Re-pressurized system to 65 PSI and conducted full emergency braking road test.`,
+      type: "Vehicle",
+      priority: "Critical",
+      status: "Resolved",
+      address: "Distribution Center 4, Baltimore, MD",
+      latitude: 39.2904,
+      longitude: -76.6122,
+      slaStatus: "Met",
+      resolvedAt: new Date(baseTime - 12 * 24 * 60 * 60 * 1000),
+      resolutionNote: "Replaced master cylinder line fitting and O-rings, flushed DOT-4 fluid, re-pressurized to 65 PSI.",
+      clientId: clientUserIds[2],
+      vehicleId: vehicleIds[4],
+      reportedById: clientUserIds[2],
+      assignedToId: techInternalIds[1],
     },
     {
-      title: "Minor Fender Bending Incident at Loading Bay",
-      description: `ACCIDENT REPORT & DAMAGE ASSESSMENT:
-While performing low-speed reversing maneuver into Loading Bay 12 at Apex Hub Warehouse, vehicle rear bumper made light contact with the protective rubber dock buffer.
+      // INC-006 (Open - Similar to INC-005)
+      title: "Brake Line Hydraulic Pressure Loss & Low Fluid Alert",
+      description: `INCIDENT SUMMARY:
+Low brake pressure indicator triggered on Heavy Duty Hauler vehicle dashboard. Hydraulic line pressure reads 35 PSI (normal > 60 PSI).
 
-INSPECTION & SAFETY CHECK:
-• Vehicle Body: Minor paint scuffing on lower tailgate assembly; no frame deformation or structural integrity issues.
-• Driver Status: Safe, uninjured, cleared standard sobriety check.
-• Fleet Status: Vehicle remains fully drivable and operationally certified.
-
-PENDING STEPS:
-Awaiting client photo submission for bodywork insurance processing.`,
-      type: "Accident",
-      priority: "Medium",
-      status: "Waiting Client",
+OBSERVATIONS:
+• Driver noticed soft brake pedal response during cargo delivery stop.
+• Initial check suggests hydraulic fluid leakage around master cylinder fitting or line seal.
+• Requires technician dispatch to replace cylinder seals, flush line fluid, and test pressure.`,
+      type: "Vehicle",
+      priority: "Critical",
+      status: "Open",
       address: "Apex Hub Warehouse 12, Brooklyn, NY",
       latitude: 40.6782,
       longitude: -73.9442,
       slaStatus: "Healthy",
       clientId: clientUserIds[2],
-      vehicleId: vehicleIds[4],
-      reportedById: clientUserIds[2],
-      assignedToId: techInternalIds[3],
-    },
-    {
-      title: "Battery Voltage Depletion Warning",
-      description: `ELECTRICAL SYSTEM DIAGNOSTIC REPORT:
-Automated battery health monitor triggered a low voltage threshold alert (11.4V resting capacity) while the vehicle was idling at Shuttle Station 8.
-
-DIAGNOSTIC SUMMARY:
-• Alternator Output: Fluctuating between 12.1V and 13.8V under electrical load.
-• Battery Age: 28 months in active service.
-• Starter Current Draw: 240A during ignition turn (within tolerance).
-
-RESOLVED ACTIONS:
-Technician Claire Dupont replaced auxiliary battery unit, cleaned ground terminals, and verified stable 14.2V alternator charging output.`,
-      type: "Vehicle",
-      priority: "Medium",
-      status: "Resolved",
-      address: "Metro Shuttle Station 8, Queens, NY",
-      latitude: 40.7282,
-      longitude: -73.7949,
-      slaStatus: "Met",
-      clientId: clientUserIds[2],
       vehicleId: vehicleIds[5],
-      reportedById: clientUserIds[2],
-      assignedToId: techInternalIds[3],
-    },
-    {
-      title: "Scheduled 50,000 KM Preventative Service",
-      description: `PREVENTATIVE MAINTENANCE LOG:
-Routine scheduled preventative maintenance completed for Heavy Duty Hauler T-800 at Central Depot.
-
-COMPLETED WORK ITEMS:
-1. Replaced front and rear heavy-duty brake pads and flushed hydraulic line fluid.
-2. Synthetic engine oil filter replacement (15W-40 API CK-4).
-3. 10-point tire pressure balancing and tread depth inspection (all tires > 6mm).
-4. Full telematics firmware patch upgrade applied.`,
-      type: "Maintenance",
-      priority: "Low",
-      status: "Closed",
-      address: "PowerFleet Central Depot, Jersey City, NJ",
-      latitude: 40.7178,
-      longitude: -74.0431,
-      slaStatus: "Met",
-      clientId: clientUserIds[0],
-      vehicleId: vehicleIds[0],
-      reportedById: clientUserIds[0],
-      assignedToId: techInternalIds[1],
-    },
-    {
-      title: "Client Complaint regarding Telematics Portal Delay",
-      description: "Client reported 5-minute latency in live dashboard vehicle location refresh rate during peak traffic.",
-      type: "Client Complaint",
-      priority: "Low",
-      status: "Resolved",
-      address: "TransCorp Regional Office, Stamford, CT",
-      latitude: 41.0534,
-      longitude: -73.5387,
-      slaStatus: "Met",
-      clientId: clientUserIds[0],
-      vehicleId: vehicleIds[1],
-      reportedById: clientUserIds[0],
-      assignedToId: techInternalIds[0],
-    },
-    {
-      title: "Unresponsive Tachograph Unit",
-      description: "Digital tachograph fails to log driver duty hours properly. LCD screen displays error code E-14.",
-      type: "GPS Device",
-      priority: "High",
-      status: "Waiting Technician",
-      address: "Cargo Depot South, Wilmington, DE",
-      latitude: 39.7391,
-      longitude: -75.5398,
-      slaStatus: "Overdue_Resolution",
-      clientId: clientUserIds[1],
-      vehicleId: vehicleIds[2],
-      reportedById: clientUserIds[1],
-      assignedToId: techInternalIds[0],
-    },
-    {
-      title: "Driver Speed Governor Threshold Exceeded",
-      description: "Automated alert triggered: vehicle exceeded 115 km/h limit on downhill segment for over 3 minutes.",
-      type: "Driver",
-      priority: "Medium",
-      status: "Open",
-      address: "I-80 Turnpike Exit 14, Stroudsburg, PA",
-      latitude: 40.9868,
-      longitude: -75.1946,
-      slaStatus: "Healthy",
-      clientId: clientUserIds[2],
-      vehicleId: vehicleIds[4],
       reportedById: clientUserIds[2],
       assignedToId: techInternalIds[1],
     },
   ];
 
   const createdIncidentIds: number[] = [];
-  const baseTime = Date.now();
 
   for (let i = 0; i < incidentList.length; i++) {
     const inc = incidentList[i];
-    // Stagger reported dates into realistic past dates (e.g. 1.5 to 20 days ago)
-    const daysAgo = (i + 1) * 2.2;
+    const daysAgo = (i + 1) * 2;
     const historicalDate = new Date(baseTime - daysAgo * 24 * 60 * 60 * 1000);
 
     const [created] = await db.insert(schema.incidents).values({
       ...inc,
-      createdAt: historicalDate,
-      updatedAt: historicalDate,
+      createdAt: inc.createdAt || historicalDate,
+      updatedAt: inc.updatedAt || historicalDate,
     }).returning();
     createdIncidentIds.push(created.id);
   }

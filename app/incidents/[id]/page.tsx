@@ -31,8 +31,20 @@ import SlaBadge from "@/components/ui/SlaBadge";
 import AssignTechnicianPanel from "@/components/incidents/AssignTechnicianPanel";
 import IncidentStatusPriorityPanel from "@/components/incidents/IncidentStatusPriorityPanel";
 import IncidentSubTasksWidget from "@/components/incidents/IncidentSubTasksWidget";
+import AiSimilarIncidentsWidget from "@/components/ui/AiSimilarIncidentsWidget";
 import Image from "next/image";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AttachmentItem {
   id: number;
@@ -157,7 +169,6 @@ export default function IncidentDetailPage() {
   }, [incidentId]);
 
   const handleDeleteAttachment = async (attachmentId: number) => {
-    if (!confirm("Are you sure you want to delete this attachment?")) return;
     try {
       await axios.delete(`/api/incidents/${incidentId}/attachment/${attachmentId}`);
       toast.success("Attachment deleted successfully.");
@@ -406,6 +417,11 @@ export default function IncidentDetailPage() {
             />
           )}
 
+          {/* AI Historical Intelligence & Similar Incidents Widget (Rendered for Support Manager & Admin) */}
+          {canViewImpactMap && (
+            <AiSimilarIncidentsWidget incidentId={Number(incidentId)} />
+          )}
+
           {/* Attachments Section */}
           {incident.attachments && incident.attachments.length > 0 && (
             <div className="space-y-3 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm">
@@ -427,18 +443,34 @@ export default function IncidentDetailPage() {
                     >
                       {/* X Delete Button */}
                       {!isDeleted && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteAttachment(att.id);
-                          }}
-                          className="absolute top-1.5 right-1.5 z-30 p-1.5 rounded-full bg-slate-950/80 text-white hover:bg-rose-600 transition-colors shadow-md cursor-pointer opacity-80 hover:opacity-100"
-                          title="Soft Delete Attachment"
-                        >
-                          <X className="size-3.5 stroke-[2.5]" />
-                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger
+                            className="absolute top-1.5 right-1.5 z-30 p-1.5 rounded-full bg-slate-950/80 text-white hover:bg-rose-600 transition-colors shadow-md cursor-pointer opacity-80 hover:opacity-100"
+                            title="Soft Delete Attachment"
+                          >
+                            <X className="size-3.5 stroke-[2.5]" />
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Attachment?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this attachment? This action can only be undone by an Administrator.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAttachment(att.id);
+                                }}
+                                className="bg-rose-600 hover:bg-rose-700 text-white"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
 
                       {/* Admin Deleted Badge */}
@@ -788,7 +820,12 @@ export default function IncidentDetailPage() {
             </div>
 
             {/* Sub-Tasks Checklist Widget (Right Sidebar below Internal Notes) */}
-            <IncidentSubTasksWidget incidentId={Number(incidentId)} />
+            <IncidentSubTasksWidget
+              incidentId={Number(incidentId)}
+              incidentTitle={incident.title}
+              incidentDescription={incident.description}
+              vehicleName={incident.vehicle?.name}
+            />
           </div>
         )}
       </div>

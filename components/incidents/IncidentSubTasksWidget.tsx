@@ -13,11 +13,13 @@ import {
   Lock, 
   Loader2, 
   FileCheck,
-  Upload
+  Upload,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import AiTaskSuggestModal from "@/components/ui/AiTaskSuggestModal";
 
 export interface IncidentTaskItem {
   id: number;
@@ -36,9 +38,17 @@ export interface IncidentTaskItem {
 
 interface IncidentSubTasksWidgetProps {
   incidentId: number;
+  incidentTitle?: string;
+  incidentDescription?: string;
+  vehicleName?: string;
 }
 
-export default function IncidentSubTasksWidget({ incidentId }: Readonly<IncidentSubTasksWidgetProps>) {
+export default function IncidentSubTasksWidget({ 
+  incidentId,
+  incidentTitle = "Incident Investigation",
+  incidentDescription = "Fleet incident technical repair checklist.",
+  vehicleName,
+}: Readonly<IncidentSubTasksWidgetProps>) {
   const { role } = useAuth();
   const isManagerOrAdmin = role === "Support Manager" || role === "Admin";
 
@@ -50,6 +60,9 @@ export default function IncidentSubTasksWidget({ incidentId }: Readonly<Incident
   const [newTitle, setNewTitle] = useState<string>("");
   const [newRequiresProof, setNewRequiresProof] = useState<boolean>(false);
   const [addingTask, setAddingTask] = useState<boolean>(false);
+
+  // AI Task Suggestion Modal state
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
 
   // Proof file modal / input state per task
   const [activeProofTaskId, setActiveProofTaskId] = useState<number | null>(null);
@@ -243,18 +256,30 @@ export default function IncidentSubTasksWidget({ incidentId }: Readonly<Incident
         </div>
       )}
 
-      {/* Add Sub-Task Form for Support Manager / Admin */}
+      {/* Add Sub-Task Form & AI Suggestion Button for Support Manager / Admin */}
       {isManagerOrAdmin && (
         <div>
           {!showAddForm ? (
-            <button
-              type="button"
-              onClick={() => setShowAddForm(true)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-dashed border-slate-200 dark:border-slate-800 transition-all cursor-pointer select-none"
-            >
-              <Plus className="size-3.5 text-emerald-500" />
-              <span>Add Diagnostic Sub-Task</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAddForm(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-dashed border-slate-200 dark:border-slate-800 transition-all cursor-pointer select-none"
+              >
+                <Plus className="size-3.5 text-emerald-500" />
+                <span>Add Diagnostic Sub-Task</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                title="Use AI to suggest repair sub-tasks"
+              >
+                <Sparkles className="size-3.5" />
+                <span>AI Suggest Tasks</span>
+              </button>
+            </div>
           ) : (
             <form onSubmit={handleCreateTask} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
               <input
@@ -479,6 +504,17 @@ export default function IncidentSubTasksWidget({ incidentId }: Readonly<Incident
           })}
         </div>
       )}
+
+      {/* AI Task Suggestion Modal */}
+      <AiTaskSuggestModal
+        incidentId={incidentId}
+        incidentTitle={incidentTitle}
+        incidentDescription={incidentDescription}
+        vehicleName={vehicleName}
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onTasksApproved={fetchTasks}
+      />
     </div>
   );
 }

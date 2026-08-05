@@ -35,9 +35,6 @@ function getRouteTitle(pathname: string): string {
   if (parts[0] === "incidents" && parts[1]) {
     const rawId = parts[1].replace(/^INC-/i, "");
     if (!Number.isNaN(Number(rawId))) {
-      if (parts[2] === "incident-tasks") {
-        return `Ticket #${rawId} Sub-Tasks`;
-      }
       if (parts[2] === "impact") {
         return `Ticket #${rawId} Operational Impact`;
       }
@@ -113,11 +110,8 @@ export default function Header({
             <img
               src="/logo.jpg"
               alt="PowerFleet Logo"
-              className="size-8 rounded-lg object-cover shadow-md group-hover:scale-105 transition-transform border border-slate-200/50 dark:border-slate-800/50"
+              className="h-9 w-auto rounded-lg object-contain shadow-md group-hover:scale-105 transition-transform border border-slate-200/50 dark:border-slate-800/50"
             />
-            <span className="hidden font-extrabold tracking-tighter text-slate-900 dark:text-white sm:inline-block text-lg">
-              POWER FLEET <span className="text-emerald-500 dark:text-emerald-400">IMS</span>
-            </span>
           </Link>
 
           <div className="hidden h-5 w-px bg-slate-200 dark:bg-slate-800 md:block" />
