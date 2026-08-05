@@ -97,6 +97,32 @@ Database Layer (db/)
 
 ---
 
+## Database Schema & Roles
+
+The system uses Class Table Inheritance (CTI) for role management, avoiding single-table boolean logic for cleaner relations.
+
+### Project Tables
+| Table | Description |
+|---|---|
+| **`users`** | Base abstract entity for all accounts. Stores name, email, credentials, and soft-delete states. |
+| **`internal_users`** | Inherits `users`. Base entity for staff (Admin, Support Manager, Technician). |
+| **`admins`** | Inherits `internal_users`. Highest privilege. Can manage users, client accounts, and system data. |
+| **`support_managers`** | Inherits `internal_users`. Triage supervisors. Can reassign incidents, generate sub-tasks, and toggle proof rules. |
+| **`technicians`** | Inherits `internal_users`. Field engineers. Can only view assigned tickets and execute checklists. |
+| **`clients`** | Inherits `users`. External companies. Linked to multiple vehicles. Can report and comment on tickets. |
+| **`vehicles`** | Fleet assets linked to clients. Tracks IMEI, VIN, and license plates. |
+| **`incidents`** | Core entity for tickets. Stores priority, status, geo-location, assigned technician, SLA times, and reported vehicle. |
+| **`incident_tasks`** | Diagnostic checklists. Supports strict sequential execution, locked statuses, and mandatory photo proofs. |
+| **`incident_comments`** | Public and private chatter threads on an incident. |
+| **`incident_internal_notes`** | Staff-only private notes. Supports pinning. |
+| **`incident_attachments`** | Uploaded files and photos linked to incidents. |
+| **`incident_events`** | Audit trail timeline of ticket activity (e.g., status changes, reassignments). |
+| **`impact_links`** | Tracks cascading impact rules when a vehicle goes out of service. |
+| **`generated_reports`** | Automated PDF/JSON exports tracking fleet resolution stats. |
+| **`security_audit_events`** | System-wide audit log tracking IP addresses, endpoints, and status codes of all HTTP requests. |
+
+---
+
 ## Role-Based Access Control
 
 ### Client Users
@@ -118,15 +144,53 @@ Database Layer (db/)
 
 ## API Endpoints Overview
 
-| Scope                  | Examples |
-| ---------------------- | ------------------------------------------------------------- |
-| **Auth**               | `POST /api/auth/login`, `POST /api/auth/register`, `GET /me`  |
-| **Incidents**          | `GET /api/incidents`, `POST /api/incidents`                   |
-| **Tasks & Proofs**     | `PATCH /api/incidents/[id]/tasks/[taskId]`, `POST /tasks/reorder` |
-| **AI Intelligence**    | `GET /api/ai/suggest-tasks`, `GET /api/ai/similar-incidents`  |
-| **Cron & Background**  | `POST /api/cron/sla`                                          |
+The Next.js App Router exposes the following highly structured REST API endpoints:
 
-*All parameter parsing uses robust sanitization standards (e.g. `INC-048` cleanly maps to `48`) to ensure maximum resilience against faulty route payloads.*
+### Authentication & Users
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/auth/me` | `GET` | Fetches the currently authenticated user's session and dynamically resolved CTI roles. |
+| `/api/users` | `GET`, `POST` | Admin list of users and account creation. |
+| `/api/users/[id]` | `PATCH`, `DELETE` | Update roles, lock accounts, or soft-delete users. |
+| `/api/technicians` | `GET` | Fetches available technicians for Support Managers to assign. |
+
+### Incidents
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/incidents` | `GET`, `POST` | List incidents (role-filtered) and report new fleet incidents. |
+| `/api/incidents/stats` | `GET` | Aggregated dashboard stats for revenue, SLA breaches, and ticket volume. |
+| `/api/incidents/[id]` | `GET`, `PATCH`, `DELETE` | Fetch, update priority/status, or soft-delete a specific incident. |
+| `/api/incidents/[id]/report` | `GET` | Generates a downloadable PDF report summarizing the incident. |
+
+### Tasks & Workflows
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/my-tasks` | `GET` | Fetch open sub-tasks directly assigned to the logged-in Technician. |
+| `/api/incidents/[id]/tasks` | `GET`, `POST` | List sub-tasks or create a new diagnostic step. |
+| `/api/incidents/[id]/tasks/[taskId]` | `PATCH`, `DELETE` | Check off a task, upload proof, or remove a task. Enforces sequence logic. |
+| `/api/incidents/[id]/tasks/reorder` | `POST` | Support Manager route to adjust the `order` array of a checklist. |
+
+### Attachments & Impact
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/incidents/[id]/attachments` | `GET`, `POST` | List files or upload new photos/documents. |
+| `/api/incidents/[id]/attachments/[attachmentId]` | `DELETE` | Remove a specific file from the incident record. |
+| `/api/incidents/[id]/impact` | `GET`, `POST` | Link vehicle impacts and downstream delays. |
+| `/api/uploads/[filename]` | `GET` | Serve static file uploads securely. |
+
+### AI Intelligence 
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/ai/suggest-tasks` | `GET` | Prompts GenAI to analyze the incident title/description and returns diagnostic tasks. |
+| `/api/ai/approve` | `POST` | Bulk-saves Support Manager-approved AI sub-tasks into the database. |
+| `/api/ai/similar-incidents` | `GET` | Semantic search for previously resolved tickets matching current vehicle symptoms. |
+| `/api/ai/triage` | `GET` | Smart triage inference to categorize incident priority and type. |
+
+### Background Workers & Audit
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/cron/sla` | `POST` | Background worker route (protected via cron secret) that evaluates and flags SLA breaches. |
+| `/api/audit-logs` | `GET` | Admin-only feed of all `security_audit_events` (logins, failed attempts, data breaches). |
 
 ---
 
