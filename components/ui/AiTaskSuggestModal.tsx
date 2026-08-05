@@ -40,6 +40,7 @@ export default function AiTaskSuggestModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -81,6 +82,7 @@ export default function AiTaskSuggestModal({
   // Trigger fresh fetch whenever modal opens or incidentId changes
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setError(null);
       handleFetchSuggestions();

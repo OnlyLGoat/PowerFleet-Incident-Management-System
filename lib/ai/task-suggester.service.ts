@@ -6,7 +6,7 @@
  */
 
 import { db } from "@/db";
-import { incidents, incident_tasks } from "@/db/schema";
+import { incident_tasks } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { getGeminiModel, safeCallGemini, SafeCallGeminiResult } from "./ai.config";

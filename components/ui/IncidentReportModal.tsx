@@ -92,6 +92,7 @@ export default function IncidentReportModal({
 
   useEffect(() => {
     if (isOpen && incidentId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       generateReport();
     }
   }, [isOpen, incidentId, generateReport]);

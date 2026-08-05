@@ -175,7 +175,7 @@ export default function VehiclesPage() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
+  const handleDelete = async (id: number) => {
 
     try {
       await axios.delete(`/api/vehicles/${id}`);
@@ -426,7 +426,7 @@ export default function VehiclesPage() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => handleDelete(v.id, v.name)}
+                                    onClick={() => handleDelete(v.id)}
                                     className="bg-rose-600 hover:bg-rose-700 text-white"
                                   >
                                     Delete
