@@ -61,9 +61,9 @@ export default function SlidingAuth() {
   const [isLogin, setIsLogin] = useState(() => !(mode === "signup" || mode === "register"));
   useEffect(() => {
     if (mode === "signup" || mode === "register") {
-      setIsLogin(false);
+      queueMicrotask(() => setIsLogin(false));
     } else if (mode === "login") {
-      setIsLogin(true);
+      queueMicrotask(() => setIsLogin(true));
     }
   }, [mode]);
   const [showPassword, setShowPassword] = useState(false);
