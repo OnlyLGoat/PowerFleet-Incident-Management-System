@@ -1,26 +1,47 @@
-# Power Fleet IMS — Incident Management System
+# PowerFleet IMS — AI-Powered Incident Management System
 
-> A fleet incident management platform built with Next.js 16, React 19, TypeScript, Drizzle ORM, and PostgreSQL.
+> A state-of-the-art, AI-driven fleet incident management platform built with Next.js 16, React 19, TypeScript, Drizzle ORM, and PostgreSQL.
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Key Functionality & Features](#key-functionality--features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Database Schema](#database-schema)
+- [Database Schema & Roles](#database-schema--roles)
+- [AI Intelligence Features](#ai-intelligence-features)
 - [Role-Based Access Control](#role-based-access-control)
 - [API Endpoints](#api-endpoints)
 - [Getting Started](#getting-started)
-- [Scripts](#scripts)
 - [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
 - [CI/CD](#cicd)
 
 ---
 
 ## Overview
 
-Power Fleet IMS allows fleet management companies to track and manage incidents reported by their clients. Clients can register, report incidents on their vehicles, and track their resolution. Internal staff (technicians, support managers, admins) handle, assign, and resolve incidents with full role-based access control.
+PowerFleet IMS allows fleet management companies to track, triage, and manage incidents reported by their clients. Clients can register, report incidents on their vehicles, and track their resolution. Internal staff (Technicians, Support Managers, Admins) handle, assign, and resolve incidents seamlessly with AI-driven diagnostics, SLA compliance tracking, and strict role-based access control.
+
+---
+
+## Key Functionality & Features
+
+### 🤖 AI-Powered Incident Diagnostics & Triage
+- **AI Task Suggestions**: Automatically generates step-by-step diagnostic workflows for Technicians based on reported symptoms using advanced AI.
+- **Smart Triage**: Automatically categorizes the priority (Low, Medium, High, Critical) and incident type based on the context of the user's report.
+- **Similar Incident Detection**: Proactively surfaces historically resolved tickets with similar descriptions to accelerate the resolution process.
+
+### ⏱️ SLA Compliance & Background Worker
+- **Automated SLA Tracking**: Dedicated background cron jobs (`SlaService`) to monitor ticket progression and calculate Service Level Agreement (SLA) adherence (e.g., Warning Response, Breached Response, Met with Resolution Breached).
+- **Graceful Fault Tolerance**: Safe loop executions designed to ignore concurrently deleted records and prevent cascading cron failures.
+
+### 📋 Strict Sequential Sub-Tasks & Proof Management
+- **Ordered Diagnostic Checklists**: Technicians must execute sub-tasks strictly in the sequential order set by the Support Manager. Subsequent steps are automatically locked until the previous one is marked complete.
+- **Mandatory Proof Uploads**: Granular sub-task management where specific repair steps can be strictly enforced to require photo/document proof before they can be checked off.
+
+### 🔐 Comprehensive Security & Audit Logging
+- **Automated Audit Wrapper**: All API routes are wrapped with an auditing higher-order function (`withAudit`) that tracks user IDs, IP addresses, attempted endpoints, and HTTP status codes into the `security_audit_events` table.
+- **Soft-Delete Protocol**: Robust data preservation using `deletedAt` timestamps across all entities instead of redundant boolean flags. Soft-deleted resources become strictly invisible to everyone except Admins.
 
 ---
 
@@ -30,21 +51,22 @@ Power Fleet IMS allows fleet management companies to track and manage incidents 
 | -------------- | ---------------------------------------- |
 | **Framework**  | Next.js 16 (App Router) + React 19       |
 | **Language**   | TypeScript (strict mode)                 |
-| **Styling**    | Tailwind CSS v4 + PostCSS                |
+| **Styling**    | Tailwind CSS v4 + Framer Motion          |
 | **Database**   | PostgreSQL via `postgres` driver         |
 | **ORM**        | Drizzle ORM 0.45.x                       |
+| **AI Layer**   | LangChain + @langchain/google-genai      |
 | **Auth**       | bcryptjs + JSON Web Tokens               |
 | **Testing**    | Vitest 4.x + Supertest                   |
 | **Linting**    | ESLint 9.x (`eslint-config-next`)        |
-| **CI**         | GitHub Actions                           |
+| **CI**         | GitHub Actions + SonarCloud Analysis     |
 
 ---
 
 ## Architecture
 
-The project follows a layered architecture with clear separation of concerns, structured strictly according to the UML specifications:
+The project follows a layered architecture with clear separation of concerns, structured strictly according to UML specifications:
 
-```
+```text
 HTTP Request
     │
     ▼
@@ -53,225 +75,94 @@ Next.js App Router (app/api/*/route.ts)
     ▼
 JWT Auth Middleware (middleware/auth.ts)
     │  • Extracts & verifies Bearer token
-    │  • Dynamically resolves subclass role presence
-    │  • Injects user payload into request context
+    │  • Dynamically resolves role permissions
     │
     ▼
 Route Handlers (app/api/*/route.ts)
-    │  • Wrapped in withAudit to automatically log security events
-    │  • Parse request body & Zod validation
-    │  • Delegate to OOP Service classes
-    │  • Return JSON responses
+    │  • Wrapped in withAudit to log security events
+    │  • Validates payloads using Zod
+    │  • Delegates to static OOP Service classes
     │
     ▼
 OOP Service Layer (lib/services/*)
-    │  • Implemented as static-method classes
+    │  • Enforces sequential sub-task execution
     │  • Enforces soft-delete & user status validations
-    │  • Business logic & verification
-    │  • Data access via Drizzle ORM
+    │  • Contains core business logic
     │
     ▼
 Database Layer (db/)
     │  • Drizzle ORM client
-    │  • Class Table Inheritance (CTI) mappings
-    │  • Relations for eager loading
-    │
-    ▼
-PostgreSQL Database
+    │  • Postgres execution
 ```
-
----
-
-## Database Schema
-
-### Polymorphic Inheritance (CTI)
-To satisfy strict role-less polymorphic inheritance requirements, the database contains **zero role string columns**. Instead, roles are resolved dynamically at runtime based on table presence (Class Table Inheritance):
-*   `users` represents the abstract base entity.
-*   `clients` and `internal_users` inherit from `users` (using their primary key as a foreign key pointing to `users.id`).
-*   `admins`, `support_managers`, and `technicians` inherit from `internal_users`.
-
-### Soft Delete Protocol & Global Visibility
-Entity soft-deletion does not use redundant boolean columns. Instead, it relies purely on nullability checks on `deletedAt: timestamp`.
-**Global Visibility Rule:** If an entity (Incident, Vehicle, Comment, Attachment, or Internal Note) is soft-deleted, it becomes strictly invisible to all users **except Admins**, deeply integrated directly into Drizzle ORM queries. Even original owners cannot view their soft-deleted items.
-
-### Tables
-
-| Table              | Purpose                                                      |
-| ------------------ | ------------------------------------------------------------ |
-| `users`            | Base user table (abstract parent class)                      |
-| `clients`          | Client company profile records                               |
-| `internal_users`   | Base internal staff profiles (with `isActive` state check)   |
-| `admins`           | System administrators (can manage users & close tickets)     |
-| `support_managers` | Oversight managers (can assign incidents to technicians)     |
-| `technicians`      | Technical resolvers (assigned to tickets, with availability) |
-| `vehicles`         | Fleet vehicles (IMEI, license plate, registered owner)       |
-| `incidents`        | Incident tickets with detailed SLA metrics                   |
-| `incident_comments`| Comments on incidents with public/private visibility         |
-| `incident_events`  | Timeline event logs representing audit logs history          |
-| `incident_attachments` | Attachments uploaded by users (images/documents)           |
-| `impact_links`     | Weight mapping indicating incident asset relationship links  |
-| `generated_reports`| Generated reporting history log details                      |
-| `security_audit_events` | Security access audit details                           |
-
----
-
-## SLA (Service Level Agreement) Engine
-
-The system features an automated Service Level Agreement (SLA) calculation engine. It evaluates tickets dynamically based on response and resolution milestone deadlines.
-
-### Milestone Triggers
-- **Response Deadline (`firstResponseAt`)**: Exclusively triggered when an internal staff member (`Admin`, `Support Manager`, or `Technician`) explicitly writes a comment on the ticket. Changes in status or ticket assignments *do not* artificially trigger response SLAs.
-- **Resolution Deadline (`resolvedAt`)**: Triggered when the incident status is moved to `Resolved`.
-
-### Due Date Offsets
-| Priority | Response SLA Limit (From Creation) | Resolution SLA Limit (From First Response) |
-| :--- | :--- | :--- |
-| **Low** | `createdAt + 12 hours` | `firstResponseAt + 24 hours` |
-| **Medium** | `createdAt + 6 hours` | `firstResponseAt + 12 hours` |
-| **High** | `createdAt + 2 hours` | `firstResponseAt + 6 hours` |
-| **Critical** | `createdAt + 30 minutes` | `firstResponseAt + 3 hours` |
-
-### SLA Status States
-1.  **Healthy:** Time remaining on pending milestone is above the warning thresholds.
-2.  **Warning_Response:** Response is pending with warning time remaining.
-3.  **Overdue_Response:** Response deadline missed; resolution is still within limits.
-4.  **Warning_Resolution:** Response was met on time; resolution is pending with warning time remaining.
-5.  **Overdue_Resolution:** Response was met on time; resolution deadline missed.
-6.  **Overdue_Both:** Both response and resolution deadlines missed.
-7.  **Met:** Both response and resolution limits successfully met on time.
-8.  **Met_With_Response_Overdue:** Response deadline missed, but resolution met on time.
-9.  **Met_With_Resolution_Overdue:** Response met on time, but resolution deadline missed.
 
 ---
 
 ## Role-Based Access Control
 
-*   **ClientUser:** Can register, create incidents, view/comment on own incidents, change own comments visibility. Forbidden from filtering by internal metrics (e.g. `slaStatus`).
-*   **Technician:** Can view/comment on assigned incidents, change own comments visibility, resolve incidents.
-*   **SupportManager:** Can view all incidents, assign work, comment on any incident.
-*   **Admin:** Full access, manage vehicles & users, comment on any incident, change any comment visibility.
+### 👤 Client Users
+- Can **only** view incidents reported by them or belonging to their registered company fleet vehicles.
+- Submit new incidents, post comments on their tickets, and track live status.
+- Cannot alter incident priority/status or access internal technician tools.
+
+### 🔧 Technicians
+- Can **only** view incidents assigned directly to them.
+- Access the dedicated Sub-Tasks widget to check off sequential repair steps and upload mandatory proof attachments.
+- Cannot close, cancel, or reorder sub-tasks.
+
+### 👑 Admins & Support Managers
+- Full operational visibility across all system incidents, client accounts, vehicles, and technicians.
+- Assign tickets to technicians and manually control status and priority.
+- Generate, edit, and reorder diagnostic sub-tasks for technicians, and toggle required proof restrictions.
 
 ---
 
-## API Endpoints
+## API Endpoints Overview
 
-### Authentication
+| Scope                  | Examples |
+| ---------------------- | ------------------------------------------------------------- |
+| **Auth**               | `POST /api/auth/login`, `POST /api/auth/register`, `GET /me`  |
+| **Incidents**          | `GET /api/incidents`, `POST /api/incidents`                   |
+| **Tasks & Proofs**     | `PATCH /api/incidents/[id]/tasks/[taskId]`, `POST /tasks/reorder` |
+| **AI Intelligence**    | `GET /api/ai/suggest-tasks`, `GET /api/ai/similar-incidents`  |
+| **Cron & Background**  | `POST /api/cron/sla`                                          |
 
-| Method | Endpoint               | Description              | Auth Required |
-| ------ | ---------------------- | ------------------------ | ------------- |
-| POST   | `/api/auth/register`   | Register a new client    | No            |
-| POST   | `/api/auth/login`      | Login, receive JWT       | No            |
-| POST   | `/api/auth/logout`     | Logout, clear session    | Yes           |
-
-### Incidents
-
-| Method | Endpoint                                 | Description                               | Role Required     |
-| ------ | ---------------------------------------- | ----------------------------------------- | ----------------- |
-| GET    | `/api/incidents`                         | List incidents (supports dynamic query filtering) | Any authenticated |
-| POST   | `/api/incidents`                         | Create an incident                        | ClientUser        |
-| GET    | `/api/incidents/:id`                     | Get incident by ID (includes comments)    | Any authenticated |
-| PATCH  | `/api/incidents/:id`                     | Update an incident                        | Any authenticated |
-| DELETE | `/api/incidents/:id`                     | Soft-delete an incident                   | Admin             |
-| GET    | `/api/incidents/:id/notes`               | List internal notes for an incident       | InternalUser      |
-| POST   | `/api/incidents/:id/notes`               | Add an internal note to an incident       | InternalUser      |
-| PATCH  | `/api/incidents/:id/notes/:noteId`       | Toggle pin status of an internal note     | InternalUser      |
-| DELETE | `/api/incidents/:id/notes/:noteId`       | Soft-delete an internal note              | InternalUser      |
-| POST   | `/api/incidents/:id/comments`            | Add a comment to an incident              | Any authenticated |
-| PATCH  | `/api/incidents/:id/comments/:commentId` | Update visibility of a comment            | Any authenticated |
-| DELETE | `/api/incidents/:id/comments/:commentId` | Soft-delete a comment                     | Owner / Admin     |
-| POST   | `/api/incidents/:id/attachment`          | Upload an attachment to an incident       | Any authenticated |
-| DELETE | `/api/incidents/:id/attachment/:id`      | Soft-delete an attachment                 | Owner / Admin     |
-| GET    | `/api/incidents/:id/events`              | Get incident history timeline events      | Any authenticated |
-| GET    | `/api/events`                            | List global system audit logs             | InternalUser      |
-| POST   | `/api/cron/sla`                          | Trigger periodic SLA checks on open tickets| System/Cron Runner|
-
-#### Incident Query Filters (GET `/api/incidents`)
-Supports robust search queries dynamically built by Drizzle:
-- `?search=` (Matches `ID` exact or `Title` fuzzy)
-- `?status=Open,Resolved`
-- `?priority=High,Critical`
-- `?type=GPS Device,Vehicle`
-- `?slaStatus=Overdue_Both,Warning_Response` (Internal Users only)
-- `?dateFrom=` & `?dateTo=` (ISO Strings)
-
-### Vehicles
-
-| Method | Endpoint               | Description              | Role Required     |
-| ------ | ---------------------- | ------------------------ | ----------------- |
-| POST   | `/api/vehicles`        | Create a vehicle         | Admin             |
-| GET    | `/api/vehicles/:id`    | Get vehicle by ID        | Any authenticated |
-| DELETE | `/api/vehicles/:id`    | Soft-delete a vehicle    | Admin             |
-
-### Security & Audit Logs
-
-| Method | Endpoint                            | Description                               | Role Required |
-| ------ | ----------------------------------- | ----------------------------------------- | ------------- |
-| GET    | `/api/securitylogs`                 | Fetch all global security audit logs      | Admin         |
-| GET    | `/api/securitylogs/user/:id`        | Fetch security logs generated by a user   | Admin         |
-| GET    | `/api/securitylogs/incident/:id`    | Fetch security logs targeting an incident | Admin         |
-
-> **Note:** Security logging is now fully automated and centralized. API routes use a custom `withAudit` wrapper that catches successes and errors seamlessly and delegates them to the `SecurityAudit` service, eliminating try-catch boilerplate across endpoints.
+*All parameter parsing uses robust sanitization standards (e.g. `INC-048` cleanly maps to `48`) to ensure maximum resilience against faulty route payloads.*
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/OnlyLGoat/PowerFleet-Incident-Management-System.git
+   cd powerfleet_ims
+   ```
 
-- Node.js >= 20
-- PostgreSQL database
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-### Installation
+3. **Configure Environment Variables:**
+   Duplicate `.env.example` to `.env.local` and configure your database and JWT secrets.
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd powerfleet_ims
+4. **Initialize Database:**
+   ```bash
+   npm run db:push
+   npm run db:seed
+   ```
 
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with DATABASE_URL and JWT_SECRET
-
-# Run database migrations
-npx drizzle-kit push
-
-# Start the development server
-npm run dev
-```
-
----
-
-## Scripts
-
-| Script                | Description                    |
-| --------------------- | ------------------------------ |
-| `npm run dev`         | Start dev server (Turbopack)   |
-| `npm run build`       | Production build               |
-| `npm run start`       | Start production server        |
-| `npm run lint`        | Run ESLint                     |
-| `npm run test`        | Run Vitest tests               |
-| `npm run typecheck`   | TypeScript verification check  |
+5. **Start Development Server:**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## Project Structure
+## CI/CD
 
-```
-powerfleet_ims/
-├── app/                    # Next.js App Router & API Layer
-│   └── api/                # HTTP Endpoint Handlers (auth, cron, events, incidents, vehicles)
-├── db/                     # Database & Schema Layer (schema, relations, index client)
-├── lib/
-│   └── services/           # OOP Service Layer (incident, comment, vehicle, event, and SLA services)
-├── middleware/             # Request Interceptors (JWT Auth, RBAC)
-└── test/                   # Integration and Unit Test Suites (Vitest)
-```
+- **GitHub Actions**: Linting (`npm run lint`), Typechecking (`tsc --noEmit`), and Vitest (`npm run test`) automatically run on PRs and pushes to `develop`/`main`.
+- **SonarCloud**: Integrated for automated code quality gating, catching code smells, security vulnerabilities, and enforcing maximum Cognitive Complexity limits.
 
 ---
-
-## License
-
-MIT © Power Fleet
+*Built for absolute performance, scale, and uncompromising security.*
