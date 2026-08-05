@@ -84,58 +84,8 @@ export class AiSimilarIntelligenceService {
       };
     }
 
-    // High-precision local heuristic fallback matching (used if Gemini API is rate-limited or offline)
-    let bestLocalMatch: SimilarIntelligenceResult = {
-      hasMatch: false,
-      similarityMatchScore: 0,
-      historicalRootCause: "",
-      provenFixSummary: "",
-      suggestedParts: [],
-      relevantPastTicketCode: "",
-      relevantPastTicketId: 0,
-    };
-
-    const targetText = `${targetIncident.title} ${targetIncident.description} ${targetIncident.type}`.toLowerCase();
-    let highestScore = 0;
-    let bestTicket: (typeof pastResolved)[0] | null = null;
-
-    for (const past of pastResolved) {
-      const pastText = `${past.title} ${past.description} ${past.type}`.toLowerCase();
-      let score = 0;
-
-      // Category match boost
-      if (targetIncident.type === past.type) score += 35;
-
-      // Symptom & keyword overlap analysis
-      const keywords = ["gps", "telematics", "antenna", "signal", "fuel", "probe", "sensor", "can-bus", "voltage", "brake", "hydraulic", "pressure", "leak", "cylinder", "refrigeration", "battery"];
-      for (const kw of keywords) {
-        if (targetText.includes(kw) && pastText.includes(kw)) {
-          score += 15;
-        }
-      }
-
-      if (score > highestScore && score >= 50) {
-        highestScore = score;
-        bestTicket = past;
-      }
-    }
-
-    if (bestTicket) {
-      const capScore = Math.min(Math.max(highestScore, 85), 96);
-      bestLocalMatch = {
-        hasMatch: true,
-        similarityMatchScore: capScore,
-        historicalRootCause: bestTicket.resolutionNote || `Historical component failure identified in ticket INC-${String(bestTicket.id).padStart(3, "0")}.`,
-        provenFixSummary: bestTicket.resolutionNote || `Execute diagnostic inspection, verify physical wiring harness, and replace faulty module.`,
-        suggestedParts: bestTicket.type === "GPS Device" 
-          ? ["RG-58 Coaxial Antenna Cable", "SMA Connector Harness"]
-          : bestTicket.type === "Fuel"
-          ? ["Fuel Probe Wiring Harness", "CAN-bus Grounding Terminal"]
-          : ["Master Cylinder Line Fitting", "DOT-4 Heavy Duty Fluid"],
-        relevantPastTicketCode: `INC-${String(bestTicket.id).padStart(3, "0")}`,
-        relevantPastTicketId: bestTicket.id,
-      };
-    }
+    
+    const bestLocalMatch = AiSimilarIntelligenceService._calculateLocalHeuristic(targetIncident, pastResolved);
 
     return safeCallGemini<SimilarIntelligenceResult | null>(
       async () => {
@@ -192,5 +142,63 @@ STRICT MATCHING INSTRUCTIONS:
       bestLocalMatch,
       "AI High Precision Intelligence"
     );
+  }
+
+  private static _calculateLocalHeuristic(targetIncident: { title: string; description: string; type: string; vehicle?: { name: string; licensePlate: string } }, pastResolved: Array<{ id: number; title: string; description: string; type: string; resolutionNote?: string | null }>): SimilarIntelligenceResult {
+    let bestLocalMatch: SimilarIntelligenceResult = {
+      hasMatch: false,
+      similarityMatchScore: 0,
+      historicalRootCause: "",
+      provenFixSummary: "",
+      suggestedParts: [],
+      relevantPastTicketCode: "",
+      relevantPastTicketId: 0,
+    };
+
+    const targetText = `${targetIncident.title} ${targetIncident.description} ${targetIncident.type}`.toLowerCase();
+    let highestScore = 0;
+    let bestTicket: { id: number; title: string; description: string; type: string; resolutionNote?: string | null } | null = null;
+
+    for (const past of pastResolved) {
+      const pastText = `${past.title} ${past.description} ${past.type}`.toLowerCase();
+      let score = 0;
+
+      if (targetIncident.type === past.type) score += 35;
+
+      const keywords = ["gps", "telematics", "antenna", "signal", "fuel", "probe", "sensor", "can-bus", "voltage", "brake", "hydraulic", "pressure", "leak", "cylinder", "refrigeration", "battery"];
+      for (const kw of keywords) {
+        if (targetText.includes(kw) && pastText.includes(kw)) {
+          score += 15;
+        }
+      }
+
+      if (score > highestScore && score >= 50) {
+        highestScore = score;
+        bestTicket = past;
+      }
+    }
+
+    if (bestTicket) {
+      const capScore = Math.min(Math.max(highestScore, 85), 96);
+      
+      let suggestedParts = ["Master Cylinder Line Fitting", "DOT-4 Heavy Duty Fluid"];
+      if (bestTicket.type === "GPS Device") {
+        suggestedParts = ["RG-58 Coaxial Antenna Cable", "SMA Connector Harness"];
+      } else if (bestTicket.type === "Fuel") {
+        suggestedParts = ["Fuel Probe Wiring Harness", "CAN-bus Grounding Terminal"];
+      }
+
+      bestLocalMatch = {
+        hasMatch: true,
+        similarityMatchScore: capScore,
+        historicalRootCause: bestTicket.resolutionNote || `Historical component failure identified in ticket INC-${String(bestTicket.id).padStart(3, "0")}.`,
+        provenFixSummary: bestTicket.resolutionNote || `Execute diagnostic inspection, verify physical wiring harness, and replace faulty module.`,
+        suggestedParts,
+        relevantPastTicketCode: `INC-${String(bestTicket.id).padStart(3, "0")}`,
+        relevantPastTicketId: bestTicket.id,
+      };
+    }
+
+    return bestLocalMatch;
   }
 }

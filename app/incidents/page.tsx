@@ -267,7 +267,7 @@ function IncidentsContent() {
                 onChange={(e) => {
                   const val = e.target.value;
                   setPageSizeInput(val);
-                  const parsed = parseInt(val, 10);
+                  const parsed = Number.parseInt(val, 10);
                   if (!Number.isNaN(parsed) && parsed > 0) {
                     setPageSize(parsed);
                   }
@@ -309,6 +309,7 @@ function IncidentsContent() {
           </div>
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={safeCurrentPage === 1}
               className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -320,6 +321,7 @@ function IncidentsContent() {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
                 <button
                   key={pageNum}
+                  type="button"
                   onClick={() => setCurrentPage(pageNum)}
                   className={cn(
                     "px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border cursor-pointer",
@@ -334,6 +336,7 @@ function IncidentsContent() {
             </div>
 
             <button
+              type="button"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={safeCurrentPage === totalPages}
               className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"

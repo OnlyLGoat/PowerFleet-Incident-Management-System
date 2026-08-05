@@ -207,8 +207,8 @@ export default function VehiclesPage() {
       v.name.toLowerCase().includes(q) ||
       v.licensePlate.toLowerCase().includes(q) ||
       v.imei.toLowerCase().includes(q) ||
-      (v.clientCompanyName && v.clientCompanyName.toLowerCase().includes(q)) ||
-      (v.clientName && v.clientName.toLowerCase().includes(q))
+      v.clientCompanyName?.toLowerCase().includes(q) ||
+      v.clientName?.toLowerCase().includes(q)
     );
   });
 
@@ -473,11 +473,11 @@ export default function VehiclesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-1" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Vehicle Name / Model *
+                
                 </label>
-                <input
-                  type="text"
+                <input id="form-field-page-1" type="text"
                   placeholder="e.g. Toyota Hilux 4x4"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -487,11 +487,11 @@ export default function VehiclesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-2" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   License Plate Number *
+                
                 </label>
-                <input
-                  type="text"
+                <input id="form-field-page-2" type="text"
                   placeholder="e.g. 09432-116-16"
                   value={formData.licensePlate}
                   onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
@@ -501,11 +501,11 @@ export default function VehiclesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-3" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   GPS Hardware IMEI *
+                
                 </label>
-                <input
-                  type="text"
+                <input id="form-field-page-3" type="text"
                   placeholder="e.g. 864201049281745"
                   value={formData.imei}
                   onChange={(e) => setFormData({ ...formData, imei: e.target.value })}

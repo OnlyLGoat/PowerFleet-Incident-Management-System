@@ -201,7 +201,7 @@ export default function AiTaskSuggestModal({
 
               {suggestions.map((task, index) => (
                 <div
-                  key={index}
+                  key={task.title + index}
                   className={cn(
                     "p-4 rounded-2xl border transition-all space-y-2",
                     task.selected

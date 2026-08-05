@@ -142,101 +142,8 @@ export default function IncidentsDashboardPage() {
         </div>
       )}
 
-      {/* 2. KPI Scorecards (Real Database Values) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Metric 1: Total Incidents */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Total Incidents</span>
-            <Activity className="size-4 text-slate-400" />
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">
-              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.total ?? 0)}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400">Total logged tickets in database</p>
-        </div>
-
-        {/* Metric 2: Role-Based (Client sees 'Active Tickets', Internal sees 'SLA Warnings') */}
-        {isClient ? (
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-medium">Active Tickets</span>
-              <AlertCircle className="size-4 text-amber-500" />
-            </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-amber-500">
-                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.active ?? 0)}
-              </span>
-              <span className="text-xs text-slate-400">Under Review</span>
-            </div>
-            <p className="text-[11px] text-slate-400">Issues currently being resolved</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-medium">SLA Warnings</span>
-              <Clock className="size-4 text-amber-500" />
-            </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-amber-500">
-                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaWarnings ?? 0)}
-              </span>
-              <span className="text-xs text-slate-400">Action Required</span>
-            </div>
-            <p className="text-[11px] text-slate-400">Tickets near response target</p>
-          </div>
-        )}
-
-        {/* Metric 3: Role-Based (Client sees 'Fleet Count', Internal sees 'SLA Overdue') */}
-        {isClient ? (
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-medium">Registered Vehicles</span>
-              <Truck className="size-4 text-slate-400" />
-            </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.vehiclesCount ?? 0)}
-              </span>
-              <span className="text-xs text-emerald-500 font-medium">Linked Fleet</span>
-            </div>
-            <p className="text-[11px] text-slate-400">Vehicles in your account</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-medium">SLA Overdue</span>
-              <ShieldAlert className="size-4 text-rose-500" />
-            </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-rose-500">
-                {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaOverdue ?? 0)}
-              </span>
-              <span className="text-xs text-rose-400 font-medium">Overdue</span>
-            </div>
-            <p className="text-[11px] text-slate-400">Target response window missed</p>
-          </div>
-        )}
-
-        {/* Metric 4: Resolved Count */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Resolved Tickets</span>
-            <CheckCircle2 className="size-4 text-emerald-500" />
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-emerald-500">
-              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.resolved ?? 0)}
-            </span>
-            <span className="text-xs text-emerald-500 font-medium">Completed</span>
-          </div>
-          <p className="text-[11px] text-slate-400">Successfully closed incidents</p>
-        </div>
-
-      </div>
+      {/* 2. KPI Scorecards extracted to reduce cognitive complexity */}
+      <DashboardKPIs stats={stats} loading={loading} isClient={isClient} />
 
       {/* 3. Main Dashboard Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -481,6 +388,103 @@ export default function IncidentsDashboardPage() {
             </table>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function DashboardKPIs({ stats, loading, isClient }: { stats: DashboardStats | null; loading: boolean; isClient: boolean }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Metric 1: Total Incidents */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+        <div className="flex items-center justify-between text-slate-400">
+          <span className="text-xs font-medium">Total Incidents</span>
+          <Activity className="size-4 text-slate-400" />
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-2xl font-bold text-slate-900 dark:text-white">
+            {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.total ?? 0)}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-400">Total logged tickets in database</p>
+      </div>
+
+      {/* Metric 2 */}
+      {isClient ? (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Active Tickets</span>
+            <AlertCircle className="size-4 text-amber-500" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-amber-500">
+              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.active ?? 0)}
+            </span>
+            <span className="text-xs text-slate-400">Under Review</span>
+          </div>
+          <p className="text-[11px] text-slate-400">Issues currently being resolved</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">SLA Warnings</span>
+            <Clock className="size-4 text-amber-500" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-amber-500">
+              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaWarnings ?? 0)}
+            </span>
+            <span className="text-xs text-slate-400">Action Required</span>
+          </div>
+          <p className="text-[11px] text-slate-400">Tickets near response target</p>
+        </div>
+      )}
+
+      {/* Metric 3 */}
+      {isClient ? (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Registered Vehicles</span>
+            <Truck className="size-4 text-slate-400" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-slate-900 dark:text-white">
+              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.vehiclesCount ?? 0)}
+            </span>
+            <span className="text-xs text-emerald-500 font-medium">Linked Fleet</span>
+          </div>
+          <p className="text-[11px] text-slate-400">Vehicles in your account</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">SLA Overdue</span>
+            <ShieldAlert className="size-4 text-rose-500" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-rose-500">
+              {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.slaOverdue ?? 0)}
+            </span>
+            <span className="text-xs text-rose-400 font-medium">Overdue</span>
+          </div>
+          <p className="text-[11px] text-slate-400">Target response window missed</p>
+        </div>
+      )}
+
+      {/* Metric 4 */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 space-y-2">
+        <div className="flex items-center justify-between text-slate-400">
+          <span className="text-xs font-medium">Resolved Tickets</span>
+          <CheckCircle2 className="size-4 text-emerald-500" />
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-2xl font-bold text-emerald-500">
+            {loading ? <Loader2 className="size-5 animate-spin text-slate-400" /> : (stats?.resolved ?? 0)}
+          </span>
+          <span className="text-xs text-emerald-500 font-medium">Completed</span>
+        </div>
+        <p className="text-[11px] text-slate-400">Successfully closed incidents</p>
       </div>
     </div>
   );

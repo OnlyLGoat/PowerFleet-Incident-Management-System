@@ -627,10 +627,11 @@ export default function UsersManagementPage() {
 
             <form onSubmit={handleSavePermissions} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="user-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Full Name *
                 </label>
                 <input
+                  id="user-name"
                   type="text"
                   value={permFormData.name}
                   onChange={(e) => setPermFormData({ ...permFormData, name: e.target.value })}
@@ -640,11 +641,11 @@ export default function UsersManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-1" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Email Address *
+                
                 </label>
-                <input
-                  type="email"
+                <input id="form-field-page-1" type="email"
                   value={permFormData.email}
                   onChange={(e) => setPermFormData({ ...permFormData, email: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
@@ -653,11 +654,11 @@ export default function UsersManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-2" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   New Password (optional)
+                
                 </label>
-                <input
-                  type="password"
+                <input id="form-field-page-2" type="password"
                   placeholder="Leave blank to keep existing password"
                   value={permFormData.password}
                   onChange={(e) => setPermFormData({ ...permFormData, password: e.target.value })}
@@ -667,11 +668,11 @@ export default function UsersManagementPage() {
 
               {editingUser.role !== "ClientUser" && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Department
-                  </label>
-                  <input
-                    type="text"
+                  <label htmlFor="form-field-page-3" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Department
+                  
+                </label>
+                <input id="form-field-page-3" type="text"
                     value={permFormData.department}
                     onChange={(e) => setPermFormData({ ...permFormData, department: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
@@ -682,11 +683,11 @@ export default function UsersManagementPage() {
               {editingUser.role === "ClientUser" && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Company Name
-                    </label>
-                    <input
-                      type="text"
+                    <label htmlFor="form-field-page-4" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Company Name
+                    
+                </label>
+                <input id="form-field-page-4" type="text"
                       value={permFormData.companyName}
                       onChange={(e) => setPermFormData({ ...permFormData, companyName: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
@@ -694,11 +695,11 @@ export default function UsersManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      type="text"
+                    <label htmlFor="form-field-page-5" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Phone Number
+                    
+                </label>
+                <input id="form-field-page-5" type="text"
                       value={permFormData.phone}
                       onChange={(e) => setPermFormData({ ...permFormData, phone: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
@@ -741,11 +742,11 @@ export default function UsersManagementPage() {
               {editingUser.role === "Technician" && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Technical Specialty
-                    </label>
-                    <input
-                      type="text"
+                    <label htmlFor="form-field-page-6" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Technical Specialty
+                    
+                </label>
+                <input id="form-field-page-6" type="text"
                       value={permFormData.specialty}
                       onChange={(e) => setPermFormData({ ...permFormData, specialty: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
@@ -838,11 +839,11 @@ export default function UsersManagementPage() {
 
             <form onSubmit={handleRegisterUser} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-7" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Full Name *
+                
                 </label>
-                <input
-                  type="text"
+                <input id="form-field-page-7" type="text"
                   placeholder="e.g. Sarah Connor"
                   value={regData.name}
                   onChange={(e) => setRegData({ ...regData, name: e.target.value })}
@@ -852,11 +853,11 @@ export default function UsersManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-8" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Email Address *
+                
                 </label>
-                <input
-                  type="email"
+                <input id="form-field-page-8" type="email"
                   placeholder="sarah@powerfleet.com"
                   value={regData.email}
                   onChange={(e) => setRegData({ ...regData, email: e.target.value })}
@@ -866,11 +867,11 @@ export default function UsersManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-9" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Password *
+                
                 </label>
-                <input
-                  type="password"
+                <input id="form-field-page-9" type="password"
                   placeholder="••••••••"
                   value={regData.password}
                   onChange={(e) => setRegData({ ...regData, password: e.target.value })}
@@ -880,11 +881,11 @@ export default function UsersManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="form-field-page-10" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Account Role *
+                
                 </label>
-                <select
-                  value={regData.role}
+                <select id="form-field-page-10" value={regData.role}
                   onChange={(e) => setRegData({ ...regData, role: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer"
                 >
@@ -898,11 +899,11 @@ export default function UsersManagementPage() {
               {regData.role === "ClientUser" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Company Name *
-                    </label>
-                    <input
-                      type="text"
+                    <label htmlFor="form-field-page-11" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Company Name *
+                    
+                </label>
+                <input id="form-field-page-11" type="text"
                       placeholder="e.g. Global Logistics Corp"
                       value={regData.companyName}
                       onChange={(e) => setRegData({ ...regData, companyName: e.target.value })}
@@ -911,11 +912,11 @@ export default function UsersManagementPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      type="text"
+                    <label htmlFor="form-field-page-12" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Phone Number
+                    
+                </label>
+                <input id="form-field-page-12" type="text"
                       placeholder="+213 550 123 456"
                       value={regData.phone}
                       onChange={(e) => setRegData({ ...regData, phone: e.target.value })}
@@ -925,11 +926,11 @@ export default function UsersManagementPage() {
                 </>
               ) : (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Department
-                  </label>
-                  <input
-                    type="text"
+                  <label htmlFor="form-field-page-13" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Department
+                  
+                </label>
+                <input id="form-field-page-13" type="text"
                     placeholder="Operations / Technical Support"
                     value={regData.department}
                     onChange={(e) => setRegData({ ...regData, department: e.target.value })}

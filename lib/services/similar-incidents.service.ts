@@ -73,43 +73,14 @@ export class SimilarIncidentService {
     // 4. Calculate similarity score & reason
     const scoredResults: { incident: typeof candidates[0]; score: number; reason: string }[] = [];
 
+    
     for (const cand of candidates) {
-      let score = 0;
-      const reasons: string[] = [];
-
-      // Check 1: Same Vehicle ID (50 points)
-      if (target.vehicleId && cand.vehicleId === target.vehicleId) {
-        score += 50;
-        reasons.push("Same Vehicle");
-      }
-
-      // Check 2: Same Fault Category / Type (25 points)
-      if (target.type && cand.type.toLowerCase() === target.type.toLowerCase()) {
-        score += 25;
-        reasons.push(`Matching Type (${cand.type})`);
-      }
-
-      // Check 3: Same Client Account (20 points)
-      if (target.clientId && cand.clientId === target.clientId) {
-        score += 20;
-        reasons.push("Same Client");
-      }
-
-      // Check 4: Title Keyword Overlap (15 points)
-      const targetTitleWords = target.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-      const candTitle = cand.title.toLowerCase();
-      const hasTitleKeywordMatch = targetTitleWords.some(w => candTitle.includes(w));
-      if (hasTitleKeywordMatch) {
-        score += 15;
-        reasons.push("Title Pattern Match");
-      }
-
-      // Include if meaningful score >= 20
-      if (score >= 20) {
+      const result = SimilarIncidentService._calculateSimilarity(target, cand);
+      if (result.score >= 20) {
         scoredResults.push({
           incident: cand,
-          score,
-          reason: reasons.join(" • ")
+          score: result.score,
+          reason: result.reasons.join(" • ")
         });
       }
     }
@@ -131,5 +102,39 @@ export class SimilarIncidentService {
       vehicleName: item.incident.vehicle?.name || null,
       clientCompanyName: item.incident.client?.companyName || null,
     }));
+  }
+
+  private static _calculateSimilarity(target: { vehicleId?: number | null; type: string; clientId?: number | null; title: string }, cand: { vehicleId?: number | null; type: string; clientId?: number | null; title: string }): { score: number; reasons: string[] } {
+    let score = 0;
+    const reasons: string[] = [];
+
+    // Check 1: Same Vehicle ID (50 points)
+    if (target.vehicleId && cand.vehicleId === target.vehicleId) {
+      score += 50;
+      reasons.push("Same Vehicle");
+    }
+
+    // Check 2: Same Fault Category / Type (25 points)
+    if (target.type && cand.type.toLowerCase() === target.type.toLowerCase()) {
+      score += 25;
+      reasons.push(`Matching Type (${cand.type})`);
+    }
+
+    // Check 3: Same Client Account (20 points)
+    if (target.clientId && cand.clientId === target.clientId) {
+      score += 20;
+      reasons.push("Same Client");
+    }
+
+    // Check 4: Title Keyword Overlap (15 points)
+    const targetTitleWords = target.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+    const candTitle = cand.title.toLowerCase();
+    const hasTitleKeywordMatch = targetTitleWords.some((w: string) => candTitle.includes(w));
+    if (hasTitleKeywordMatch) {
+      score += 15;
+      reasons.push("Title Pattern Match");
+    }
+
+    return { score, reasons };
   }
 }

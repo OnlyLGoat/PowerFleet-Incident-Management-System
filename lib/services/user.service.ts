@@ -220,96 +220,13 @@ export class UserService {
       throw createStatusError("User not found", 404);
     }
 
-    // Update base user fields (name, email, password, restore deletedAt)
-    const userUpdates: Record<string, string | Date | null> = { updatedAt: new Date() };
-    if (data.name) userUpdates.name = data.name;
-    if (data.email) userUpdates.email = data.email;
-    if (data.password && data.password.trim().length > 0) {
-      userUpdates.password = await bcrypt.hash(data.password.trim(), 10);
-    }
-    if (data.isDeleted === false) {
-      userUpdates.deletedAt = null;
-    }
-
-    if (Object.keys(userUpdates).length > 1) {
-      await db.update(users)
-        .set(userUpdates)
-        .where(eq(users.id, targetUserId));
-    }
-
-    // Update internal user fields (isActive, department)
-    if (typeof data.isActive === "boolean" || data.department) {
-      const internalUser = await db.query.internal_users.findFirst({
-        where: eq(internal_users.userId, targetUserId),
-      });
-
-      if (internalUser) {
-        await db.update(internal_users)
-          .set({
-            ...(typeof data.isActive === "boolean" ? { isActive: data.isActive } : {}),
-            ...(data.department ? { department: data.department } : {}),
-          })
-          .where(eq(internal_users.userId, targetUserId));
-      }
-    }
-
-    // Update Admin permissions
-    if (typeof data.canManageUsers === "boolean") {
-      const adminRecord = await db.query.admins.findFirst({
-        where: eq(admins.internalUserId, targetUserId),
-      });
-
-      if (adminRecord) {
-        await db.update(admins)
-          .set({ canManageUsers: data.canManageUsers })
-          .where(eq(admins.internalUserId, targetUserId));
-      }
-    }
-
-    // Update Support Manager permissions
-    if (typeof data.canAssign === "boolean") {
-      const smRecord = await db.query.support_managers.findFirst({
-        where: eq(support_managers.internalUserId, targetUserId),
-      });
-
-      if (smRecord) {
-        await db.update(support_managers)
-          .set({ canAssign: data.canAssign })
-          .where(eq(support_managers.internalUserId, targetUserId));
-      }
-    }
-
-    // Update Technician specialty or availability
-    if (typeof data.isAvailable === "boolean" || data.specialty) {
-      const techRecord = await db.query.technicians.findFirst({
-        where: eq(technicians.internalUserId, targetUserId),
-      });
-
-      if (techRecord) {
-        await db.update(technicians)
-          .set({
-            ...(typeof data.isAvailable === "boolean" ? { isAvailable: data.isAvailable } : {}),
-            ...(data.specialty ? { specialty: data.specialty } : {}),
-          })
-          .where(eq(technicians.internalUserId, targetUserId));
-      }
-    }
-
-    // Update Client fields
-    if (data.companyName || data.phone) {
-      const clientRecord = await db.query.clients.findFirst({
-        where: eq(clients.userId, targetUserId),
-      });
-
-      if (clientRecord) {
-        await db.update(clients)
-          .set({
-            ...(data.companyName ? { companyName: data.companyName } : {}),
-            ...(data.phone ? { phone: data.phone } : {}),
-          })
-          .where(eq(clients.userId, targetUserId));
-      }
-    }
+    
+    await UserService._updateBaseUser(targetUserId, data);
+    await UserService._updateInternalUser(targetUserId, data);
+    await UserService._updateAdminRoles(targetUserId, data);
+    await UserService._updateSupportManagerRoles(targetUserId, data);
+    await UserService._updateTechnicianRoles(targetUserId, data);
+    await UserService._updateClientFields(targetUserId, data);
 
     return { message: "User updated successfully" };
   }
@@ -358,5 +275,103 @@ export class UserService {
       .where(eq(users.id, targetUserId));
 
     return { message: "User account restored successfully" };
+  }
+
+  private static async _updateBaseUser(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    const userUpdates: Record<string, string | Date | null> = { updatedAt: new Date() };
+    if (data.name) userUpdates.name = data.name;
+    if (data.email) userUpdates.email = data.email;
+    if (data.password && data.password.trim().length > 0) {
+      
+      userUpdates.password = await bcrypt.hash(data.password.trim(), 10);
+    }
+    if (data.isDeleted === false) {
+      userUpdates.deletedAt = null;
+    }
+
+    if (Object.keys(userUpdates).length > 1) {
+      await db.update(users)
+        .set(userUpdates)
+        .where(eq(users.id, targetUserId));
+    }
+  }
+
+  private static async _updateInternalUser(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    if (typeof data.isActive === "boolean" || data.department) {
+      const internalUser = await db.query.internal_users.findFirst({
+        where: eq(internal_users.userId, targetUserId),
+      });
+
+      if (internalUser) {
+        await db.update(internal_users)
+          .set({
+            ...(typeof data.isActive === "boolean" ? { isActive: data.isActive } : {}),
+            ...(data.department ? { department: data.department } : {}),
+          })
+          .where(eq(internal_users.userId, targetUserId));
+      }
+    }
+  }
+
+  private static async _updateAdminRoles(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    if (typeof data.canManageUsers === "boolean") {
+      const adminRecord = await db.query.admins.findFirst({
+        where: eq(admins.internalUserId, targetUserId),
+      });
+
+      if (adminRecord) {
+        await db.update(admins)
+          .set({ canManageUsers: data.canManageUsers })
+          .where(eq(admins.internalUserId, targetUserId));
+      }
+    }
+  }
+
+  private static async _updateSupportManagerRoles(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    if (typeof data.canAssign === "boolean") {
+      const smRecord = await db.query.support_managers.findFirst({
+        where: eq(support_managers.internalUserId, targetUserId),
+      });
+
+      if (smRecord) {
+        await db.update(support_managers)
+          .set({ canAssign: data.canAssign })
+          .where(eq(support_managers.internalUserId, targetUserId));
+      }
+    }
+  }
+
+  private static async _updateTechnicianRoles(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    if (typeof data.isAvailable === "boolean" || data.specialty) {
+      const techRecord = await db.query.technicians.findFirst({
+        where: eq(technicians.internalUserId, targetUserId),
+      });
+
+      if (techRecord) {
+        await db.update(technicians)
+          .set({
+            ...(typeof data.isAvailable === "boolean" ? { isAvailable: data.isAvailable } : {}),
+            ...(data.specialty ? { specialty: data.specialty } : {}),
+          })
+          .where(eq(technicians.internalUserId, targetUserId));
+      }
+    }
+  }
+
+  private static async _updateClientFields(targetUserId: number, data: { name?: string; email?: string; password?: string; department?: string; isActive?: boolean; isDeleted?: boolean; canManageUsers?: boolean; canAssign?: boolean; isAvailable?: boolean; specialty?: string; companyName?: string; phone?: string; }) {
+    if (data.companyName || data.phone) {
+      const clientRecord = await db.query.clients.findFirst({
+        where: eq(clients.userId, targetUserId),
+      });
+
+      if (clientRecord) {
+        await db.update(clients)
+          .set({
+            ...(data.companyName ? { companyName: data.companyName } : {}),
+            ...(data.phone ? { phone: data.phone } : {}),
+          })
+          .where(eq(clients.userId, targetUserId));
+      }
+    }
   }
 }
