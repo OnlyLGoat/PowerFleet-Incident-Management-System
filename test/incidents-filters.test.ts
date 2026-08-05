@@ -27,7 +27,7 @@ describe("Incident Filtering & Search API", () => {
         await db.insert(admins).values({
             internalUserId: adminInt.userId, canManageUsers: true
         });
-        adminToken = jwt.sign({ userID: admin.id, userROLE: "Admin" }, process.env.JWT_SECRET!);
+        adminToken = jwt.sign({ userID: admin.id, tokenVersion: 1, userROLE: "Admin" }, process.env.JWT_SECRET!);
 
         // 2. Create Technician
         const [tech] = await db.insert(users).values({
@@ -41,7 +41,7 @@ describe("Incident Filtering & Search API", () => {
             internalUserId: techInt.userId, specialty: "GPS Tracking", isAvailable: true
         }).returning();
         techRecord = techRec;
-        techToken = jwt.sign({ userID: tech.id, userROLE: "Technician" }, process.env.JWT_SECRET!);
+        techToken = jwt.sign({ userID: tech.id, tokenVersion: 1, userROLE: "Technician" }, process.env.JWT_SECRET!);
 
         // 3. Create Client
         const [client] = await db.insert(users).values({
@@ -52,7 +52,7 @@ describe("Incident Filtering & Search API", () => {
             companyName: "Client Corp", phone: "111", userId: client.id
         }).returning();
         clientProfile = profile;
-        clientToken = jwt.sign({ userID: client.id, userROLE: "ClientUser" }, process.env.JWT_SECRET!);
+        clientToken = jwt.sign({ userID: client.id, tokenVersion: 1, userROLE: "ClientUser" }, process.env.JWT_SECRET!);
 
         // 4. Create Vehicle
         const [v1] = await db.insert(vehicles).values({
@@ -63,7 +63,7 @@ describe("Incident Filtering & Search API", () => {
         // 5. Create Incidents to Filter
         const data = [
             { title: "GPS offline completely", description: "Desc", type: "GPS Device" as const, priority: "High" as const, status: "Open" as const, slaStatus: "Healthy" as const },
-            { title: "Engine issue", description: "Desc", type: "Vehicle" as const, priority: "Critical" as const, status: "In Progress" as const, slaStatus: "Breached_Response" as const, assignedToId: techRecord.internalUserId },
+            { title: "Engine issue", description: "Desc", type: "Vehicle" as const, priority: "Critical" as const, status: "In Progress" as const, slaStatus: "Overdue_Response" as const, assignedToId: techRecord.internalUserId },
             { title: "Driver complain", description: "Desc", type: "Driver" as const, priority: "Low" as const, status: "Resolved" as const, slaStatus: "Met" as const },
         ];
         
@@ -123,9 +123,9 @@ describe("Incident Filtering & Search API", () => {
     });
 
     it("should ignore slaStatus and assignedToId filters for ClientUser (RBAC)", async () => {
-        // Client attempts to filter by Breached_Response which would normally yield 1 result
+        // Client attempts to filter by Overdue_Response which would normally yield 1 result
         // But since clients can't filter by SLA, it should ignore the filter and return all 3 tickets.
-        const req = new NextRequest("http://localhost/api/incidents?slaStatus=Breached_Response&assignedToId=9999", {
+        const req = new NextRequest("http://localhost/api/incidents?slaStatus=Overdue_Response&assignedToId=9999", {
             method: "GET",
             headers: { "Authorization": `Bearer ${clientToken}` }
         });

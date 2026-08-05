@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { auditLogChanges } from "./audit"
 import { and, eq, isNull } from "drizzle-orm"
-import { incident_attachments, incidents, internal_users, technicians, users, admins } from "@/db/schema"
+import { incident_attachments, incidents, internal_users, technicians, users, admins, incident_tasks } from "@/db/schema"
 
 interface CreateAttachmentIncident {
     filename: string
@@ -148,6 +148,43 @@ export class AttachmentService {
             .set({ deletedAt: new Date() })
             .where(eq(incident_attachments.id, attachmentId))
             .returning();
+
+        // Disassociate proof from any incident tasks using this attachment & uncomplete the task
+        if (attachmentRecord.fileUrl) {
+            const linkedTasks = await db.query.incident_tasks.findMany({
+                where: and(
+                    eq(incident_tasks.incidentId, attachmentRecord.incidentId),
+                    eq(incident_tasks.proofFileUrl, attachmentRecord.fileUrl)
+                )
+            });
+
+            for (const task of linkedTasks) {
+                await db.update(incident_tasks)
+                    .set({
+                        proofFileUrl: null,
+                        isCompleted: false,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(incident_tasks.id, task.id));
+            }
+
+            if (linkedTasks.length > 0) {
+                // If incident status was "Resolved", set back to "In Progress" since tasks are no longer complete
+                const incidentRecord = await db.query.incidents.findFirst({
+                    where: eq(incidents.id, attachmentRecord.incidentId)
+                });
+
+                if (incidentRecord && incidentRecord.status === "Resolved") {
+                    await db.update(incidents)
+                        .set({
+                            status: "In Progress",
+                            resolvedAt: null,
+                            updatedAt: new Date()
+                        })
+                        .where(eq(incidents.id, attachmentRecord.incidentId));
+                }
+            }
+        }
 
         return deletedAttachment;
     }

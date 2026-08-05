@@ -31,14 +31,18 @@ export class SecurityAudit {
         }
         
         // 3. Store Audit Event
-        await db.insert(security_audit_events).values({
-            ipAddress,
-            attemptedEndpoint,
-            statusCode,
-            message,
-            incidentTragetId,
-            userId: authenticatedUserId
-        }).returning()
+        try {
+            await db.insert(security_audit_events).values({
+                ipAddress,
+                attemptedEndpoint,
+                statusCode,
+                message,
+                incidentTragetId,
+                userId: authenticatedUserId
+            }).returning();
+        } catch (auditErr) {
+            console.error("Failed to insert security audit event:", auditErr);
+        }
         
     }
     

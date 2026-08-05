@@ -30,12 +30,16 @@ export async function withAudit(
             }
         } catch {}
 
-        await SecurityAudit.createSecurityAudit({
-            attemptedEndpoint: endpoint,
-            message,
-            statusCode: response.status,
-            incidentTragetId: incidentId
-        }, req, userId);
+        try {
+            await SecurityAudit.createSecurityAudit({
+                attemptedEndpoint: endpoint,
+                message,
+                statusCode: response.status,
+                incidentTragetId: incidentId
+            }, req, userId);
+        } catch (e) {
+            console.error("Audit log error:", e);
+        }
 
         return response;
     } catch (error: unknown) {
@@ -45,12 +49,16 @@ export async function withAudit(
         
         const userId = 'user' in req ? (req as AuthenticatedRequest).user?.userId : undefined;
 
-        await SecurityAudit.createSecurityAudit({
-            attemptedEndpoint: endpoint,
-            message,
-            statusCode: status,
-            incidentTragetId: incidentId
-        }, req, userId);
+        try {
+            await SecurityAudit.createSecurityAudit({
+                attemptedEndpoint: endpoint,
+                message,
+                statusCode: status,
+                incidentTragetId: incidentId
+            }, req, userId);
+        } catch (e) {
+            console.error("Audit log error on exception:", e);
+        }
 
         return NextResponse.json(
             { error: status === 500 ? "Internal Server Error" : message, details: status === 500 ? message : undefined },

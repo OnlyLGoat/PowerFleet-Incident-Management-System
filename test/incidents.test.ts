@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import { GET as listIncidentsGET, POST as createIncidentPOST } from "@/app/api/incidents/route";
 import { PATCH as updateIncidentPATCH } from "@/app/api/incidents/[id]/route";
 import { db } from "@/db";
-import { users, internal_users, admins, clients, vehicles, incidents, technicians, support_managers } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, internal_users, admins, clients, vehicles, incidents, technicians, support_managers, impact_links, incident_events } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 describe("Incidents API Endpoints", () => {
     let adminUser: { id: number } | undefined, adminToken: string;
@@ -20,6 +20,29 @@ describe("Incidents API Endpoints", () => {
     let createdIncidentId: number;
 
     beforeAll(async () => {
+        // Clean up any stale test accounts from interrupted runs
+        const testEmails = [
+            "admin_test_incidents@example.com",
+            "manager_test_incidents@example.com",
+            "tech_test_incidents@example.com",
+            "inactive_test_incidents@example.com",
+            "client1_test_incidents@example.com",
+            "client2_test_incidents@example.com"
+        ];
+        const existingUsers = await db.query.users.findMany({
+            where: inArray(users.email, testEmails)
+        });
+        if (existingUsers.length > 0) {
+            const userIds = existingUsers.map(u => u.id);
+            await db.delete(impact_links);
+            await db.delete(incident_events);
+            await db.delete(incidents).where(inArray(incidents.clientId, userIds));
+            await db.delete(vehicles).where(inArray(vehicles.clientId, userIds));
+            for (const u of existingUsers) {
+                await db.delete(users).where(eq(users.id, u.id));
+            }
+        }
+
         // 1. Create Admin
         const [admin] = await db.insert(users).values({
             name: "Admin", email: "admin_test_incidents@example.com", password: "HashedPassword123!"
@@ -31,7 +54,7 @@ describe("Incidents API Endpoints", () => {
         await db.insert(admins).values({
             internalUserId: adminInt.userId, canManageUsers: true
         });
-        adminToken = jwt.sign({ userID: admin.id, userROLE: "Admin" }, process.env.JWT_SECRET!);
+        adminToken = jwt.sign({ userID: admin.id, tokenVersion: 1, userROLE: "Admin" }, process.env.JWT_SECRET!);
 
         // 2. Create Support Manager
         const [manager] = await db.insert(users).values({
@@ -44,7 +67,7 @@ describe("Incidents API Endpoints", () => {
         await db.insert(support_managers).values({
             internalUserId: managerInt.userId, canAssign: true
         });
-        managerToken = jwt.sign({ userID: manager.id, userROLE: "Support Manager" }, process.env.JWT_SECRET!);
+        managerToken = jwt.sign({ userID: manager.id, tokenVersion: 1, userROLE: "Support Manager" }, process.env.JWT_SECRET!);
 
         // 3. Create Technician
         const [tech] = await db.insert(users).values({
@@ -58,7 +81,7 @@ describe("Incidents API Endpoints", () => {
             internalUserId: techInt.userId, specialty: "GPS Tracking", isAvailable: true
         }).returning();
         techRecord = techRec;
-        techToken = jwt.sign({ userID: tech.id, userROLE: "Technician" }, process.env.JWT_SECRET!);
+        techToken = jwt.sign({ userID: tech.id, tokenVersion: 1, userROLE: "Technician" }, process.env.JWT_SECRET!);
 
         // 4. Create Inactive Technician
         const [inactive] = await db.insert(users).values({
@@ -71,7 +94,7 @@ describe("Incidents API Endpoints", () => {
         await db.insert(technicians).values({
             internalUserId: inactiveInt.userId, specialty: "GPS Tracking", isAvailable: true
         });
-        inactiveToken = jwt.sign({ userID: inactive.id, userROLE: "Technician" }, process.env.JWT_SECRET!);
+        inactiveToken = jwt.sign({ userID: inactive.id, tokenVersion: 1, userROLE: "Technician" }, process.env.JWT_SECRET!);
 
         // 5. Create Clients
         const [client1] = await db.insert(users).values({
@@ -82,7 +105,7 @@ describe("Incidents API Endpoints", () => {
             companyName: "Client 1 Corp", phone: "111", userId: client1.id
         }).returning();
         clientProfile1 = profile1;
-        clientToken1 = jwt.sign({ userID: client1.id, userROLE: "ClientUser" }, process.env.JWT_SECRET!);
+        clientToken1 = jwt.sign({ userID: client1.id, tokenVersion: 1, userROLE: "ClientUser" }, process.env.JWT_SECRET!);
 
         const [client2] = await db.insert(users).values({
             name: "Client 2", email: "client2_test_incidents@example.com", password: "HashedPassword123!"
@@ -108,6 +131,8 @@ describe("Incidents API Endpoints", () => {
     afterAll(async () => {
         // Cascade delete on users cleans up profiles
         if (createdIncidentId) {
+            await db.delete(impact_links).where(eq(impact_links.incidentId, createdIncidentId));
+            await db.delete(incident_events).where(eq(incident_events.incidentId, createdIncidentId));
             await db.delete(incidents).where(eq(incidents.id, createdIncidentId));
         }
         if (vehicle1) await db.delete(vehicles).where(eq(vehicles.id, vehicle1.id));

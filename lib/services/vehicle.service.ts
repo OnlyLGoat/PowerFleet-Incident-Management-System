@@ -105,4 +105,110 @@ export class VehicleService {
 
         return deletedVehicle;
     }
+
+    /**
+     * Updates an existing vehicle (Admin only)
+     */
+    static async updateVehicle(
+        vehicleId: number,
+        data: { name?: string; imei?: string; licensePlate?: string; clientId?: number; isDeleted?: boolean },
+        authenticatedUserId: number
+    ) {
+        await this.checkUserNotDeleted(authenticatedUserId);
+        await verifyAdminAccess(authenticatedUserId);
+
+        const vehicleRecord = await db.query.vehicles.findFirst({
+            where: eq(vehicles.id, vehicleId)
+        });
+
+        if (!vehicleRecord) {
+            throw createStatusError("Vehicle Not Found!", 404);
+        }
+
+        if (data.clientId) {
+            await this.checkUserNotDeleted(data.clientId);
+            const clientRecord = await db.query.clients.findFirst({
+                where: eq(clients.userId, data.clientId)
+            });
+            if (!clientRecord) {
+                throw createStatusError("Client profile not found", 404);
+            }
+        }
+
+        const [updatedVehicle] = await db.update(vehicles)
+            .set({
+                ...(data.name ? { name: data.name } : {}),
+                ...(data.imei ? { imei: data.imei } : {}),
+                ...(data.licensePlate ? { licensePlate: data.licensePlate } : {}),
+                ...(data.clientId ? { clientId: data.clientId } : {}),
+                ...(data.isDeleted === false ? { deletedAt: null } : {}),
+                updatedAt: new Date(),
+            })
+            .where(eq(vehicles.id, vehicleId))
+            .returning();
+
+        return updatedVehicle;
+    }
+
+    /**
+     * Restores a soft-deleted vehicle (Admin only)
+     */
+    static async restoreVehicle(vehicleId: number, authenticatedUserId: number) {
+        await this.checkUserNotDeleted(authenticatedUserId);
+        await verifyAdminAccess(authenticatedUserId);
+
+        const vehicleRecord = await db.query.vehicles.findFirst({
+            where: eq(vehicles.id, vehicleId)
+        });
+
+        if (!vehicleRecord) {
+            throw createStatusError("Vehicle Not Found!", 404);
+        }
+
+        const [restoredVehicle] = await db.update(vehicles)
+            .set({ deletedAt: null, updatedAt: new Date() })
+            .where(eq(vehicles.id, vehicleId))
+            .returning();
+
+        return restoredVehicle;
+    }
+
+    /**
+     * Gets vehicles for the authenticated user.
+     * Clients only see their active vehicles. Internal users see all vehicles including soft-deleted.
+     */
+    static async getVehicles(authenticatedUserId: number, role: string) {
+        await this.checkUserNotDeleted(authenticatedUserId);
+
+        if (role === "ClientUser") {
+            return await db.query.vehicles.findMany({
+                where: and(eq(vehicles.clientId, authenticatedUserId), isNull(vehicles.deletedAt)),
+                columns: {
+                    id: true,
+                    name: true,
+                    licensePlate: true,
+                    imei: true,
+                }
+            });
+        } else {
+            const list = await db
+                .select({
+                    id: vehicles.id,
+                    name: vehicles.name,
+                    licensePlate: vehicles.licensePlate,
+                    imei: vehicles.imei,
+                    clientId: vehicles.clientId,
+                    createdAt: vehicles.createdAt,
+                    deletedAt: vehicles.deletedAt,
+                    clientCompanyName: clients.companyName,
+                    clientName: users.name,
+                    clientEmail: users.email,
+                })
+                .from(vehicles)
+                .leftJoin(clients, eq(vehicles.clientId, clients.userId))
+                .leftJoin(users, eq(vehicles.clientId, users.id));
+
+            return list;
+        }
+    }
 }

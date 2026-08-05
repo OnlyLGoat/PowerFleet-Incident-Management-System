@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { withAuth, AuthenticatedRequest } from "@/middleware/auth"; 
+
+export const dynamic = "force-dynamic"; 
 import { db } from "@/db"
 import { incidents, clients, technicians, incident_comments, incident_attachments, incident_internal_notes } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -10,7 +12,8 @@ import { withAudit } from "@/lib/utils/audit";
 export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'GET /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {
@@ -31,6 +34,7 @@ export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { para
                 isAdmin ? undefined : isNull(incidents.deletedAt)
             ),
             with: {
+                vehicle: true,
                 comments: {
                     where: isAdmin ? undefined : isNull(incident_comments.deletedAt),
                     with: {
@@ -142,7 +146,8 @@ export const GET = withAuth(async (req: AuthenticatedRequest, { params }: { para
 export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'PATCH /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {
@@ -158,7 +163,17 @@ export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { pa
         } catch {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
-        
+
+        if (
+            (body.status !== undefined || body.priority !== undefined || body.assignedToId !== undefined) &&
+            (!body.message || typeof body.message !== "string" || !body.message.trim())
+        ) {
+            return NextResponse.json(
+                { error: "Reason/message is required when changing status, priority, or technician assignment." },
+                { status: 400 }
+            );
+        }
+
         const newUpdatedIncident = await IncidentService.updateIncident(body, currentUser.userId, incidentId);
         
         return NextResponse.json(
@@ -171,7 +186,8 @@ export const PATCH = withAuth(async (req: AuthenticatedRequest, { params }: { pa
 export const DELETE = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     return withAudit(req, 'DELETE /incidents/[id]', async () => {
         const { id } = await params;
-        const incidentId = Number(id);
+        const rawId = (id || "").replace(/^INC-/i, "");
+        const incidentId = Number(rawId);
         const currentUser = req.user!;
         
         if (Number.isNaN(incidentId)) {

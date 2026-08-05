@@ -14,7 +14,8 @@ import {
     security_audit_events,
     incident_attachments,
     impact_links,
-    incident_internal_notes
+    incident_internal_notes,
+    incident_tasks
 } from "./schema";
 
 // 1. User Table Relations
@@ -112,6 +113,7 @@ export const incidentsRelations = relations(incidents, ({ one, many }) => ({
     attachments: many(incident_attachments),
     impactLinks: many(impact_links),
     internalNotes: many(incident_internal_notes),
+    tasks: many(incident_tasks),
 }));
 
 // 8. Incident Comments Table Relations
@@ -187,5 +189,17 @@ export const incidentInternalNotesRelations = relations(incident_internal_notes,
     author: one(internal_users, {
         fields: [incident_internal_notes.authorId],
         references: [internal_users.userId],
+    }),
+}));
+
+// 15. Incident Tasks Table Relations
+export const incidentTasksRelations = relations(incident_tasks, ({ one }) => ({
+    incident: one(incidents, {
+        fields: [incident_tasks.incidentId],
+        references: [incidents.id],
+    }),
+    createdByUser: one(users, {
+        fields: [incident_tasks.createdByUserId],
+        references: [users.id],
     }),
 }));

@@ -1,14 +1,43 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db"
-import { users } from "@/db/schema"
+import { users, internal_users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { resolveUserRole } from "@/lib/services/role"
 import { withAudit } from "@/lib/utils/audit";
 
+// Global in-memory rate limiter for simple protection
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function isRateLimited(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+
+    if (!entry || now > entry.resetTime) {
+        rateLimitMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+        return false;
+    }
+
+    entry.count += 1;
+    if (entry.count > MAX_ATTEMPTS) {
+        return true;
+    }
+    return false;
+}
+
 export async function POST(req: Request) {
     return withAudit(req, 'POST auth/login', async () => {
+        const ip = req.headers.get("x-forwarded-for") || "unknown_ip";
+        if (isRateLimited(ip)) {
+            return NextResponse.json(
+                { success: false, error: "Too many login attempts. Please try again in 15 minutes." },
+                { status: 429 }
+            );
+        }
+
         const { email, password } = await req.json()
         
         // 1. Check if email or password are empty
@@ -24,22 +53,33 @@ export async function POST(req: Request) {
             .select()
             .from(users)
             .where(eq(users.email, email.trim().toLowerCase()))
-            .limit(1)
+            .limit(1);
             
-        if(!user) {
+        if (!user || user.deletedAt !== null) {
             return NextResponse.json(
                 { success: false, error: "Email Invalid !" },
                 { status: 401 }
-            )
+            );
+        }
+
+        // Check if internal user is active
+        const internalUserRecord = await db.query.internal_users.findFirst({
+            where: eq(internal_users.userId, user.id)
+        });
+        if (internalUserRecord && !internalUserRecord.isActive) {
+            return NextResponse.json(
+                { success: false, error: "Your account has been deactivated. Please contact an administrator." },
+                { status: 403 }
+            );
         }
         
         // 3. Compare Cryptographic Hashes
-        const isPasswordValid = await bcrypt.compare(password, user.password)
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if(!isPasswordValid) {
             return NextResponse.json(
                 { success: false, error: "Password Invalid !" },
                 { status: 401 }
-            )
+            );
         }
 
         // 4. Resolve Dynamic Role (for user response profile payload only)
@@ -51,10 +91,11 @@ export async function POST(req: Request) {
             );
         }
         
-        // 5. Generate JWT (using only userID)
+        // 5. Generate JWT (using userID and tokenVersion)
         const token = jwt.sign(
             {
-                userID: user.id
+                userID: user.id,
+                tokenVersion: user.tokenVersion
             },
             process.env.JWT_SECRET!,
             { expiresIn: "1d" }

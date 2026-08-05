@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { internal_users, incidents, technicians, incident_comments, admins, users } from '@/db/schema'
+import { internal_users, incidents, technicians, incident_comments, admins, users, clients } from '@/db/schema'
 import { eq, and, isNull } from "drizzle-orm";
 import { auditLogChanges } from './audit';
 import { SlaService, SlaPriority } from './sla.service';
@@ -43,7 +43,12 @@ export class CommentService {
 
     private static async checkCreateAuthorization(user: CurrentUser, incidentExistence: typeof incidents.$inferSelect) {
         if (user.role === "ClientUser") {
-            if (user.userId !== incidentExistence.reportedById) {
+            const clientRecord = await db.query.clients.findFirst({
+                where: eq(clients.userId, user.userId)
+            });
+
+            const isOwner = clientRecord && (incidentExistence.clientId === clientRecord.userId || incidentExistence.reportedById === clientRecord.userId);
+            if (!isOwner) {
                 throw createStatusError("Forbidden: You cannot comment on this incident!", 403);
             }
             return;
@@ -134,7 +139,11 @@ export class CommentService {
         let isAdmin = false;
 
         if (user.role === "ClientUser") {
-            if ((user.userId !== incidentExistence.reportedById) || (user.userId !== commentExistence.userId)) {
+            const clientRecord = await db.query.clients.findFirst({
+                where: eq(clients.userId, user.userId)
+            });
+            const isOwner = clientRecord && (incidentExistence.clientId === clientRecord.userId || incidentExistence.reportedById === clientRecord.userId);
+            if (!isOwner || (user.userId !== commentExistence.userId)) {
                 throw createStatusError("Forbidden: You cannot update this comment!", 403);
             }
             return false;

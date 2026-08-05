@@ -1,8 +1,11 @@
-// db/index.ts
-import { drizzle } from "drizzle-orm/postgres-js"; // Or your matching database driver (e.g., node-postgres or neon)
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
+import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres"; 
 import * as schema from "./schema";
-import * as relations from "./relations"; // ◄── Import your relations mapping
+import * as relations from "./relations";
 
 const connectionString = process.env.DATABASE_URL!;
 const queryClient = postgres(connectionString);

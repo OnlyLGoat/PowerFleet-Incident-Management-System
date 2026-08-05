@@ -20,12 +20,12 @@ export const slaStatusEnum = pgEnum("incident_slaStatus_enum", [
     "Healthy",
     "Warning_Response",
     "Warning_Resolution",
-    "Breached_Response",
-    "Breached_Resolution",
-    "Breached_Both",
+    "Overdue_Response",
+    "Overdue_Resolution",
+    "Overdue_Both",
     "Met",
-    "Met_With_Response_Breached",
-    "Met_With_Resolution_Breached"
+    "Met_With_Response_Overdue",
+    "Met_With_Resolution_Overdue"
 ]);
 
 // 1. User Table
@@ -34,6 +34,7 @@ export const users = pgTable("users", {
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
     password: text("password").notNull(),
+    tokenVersion: integer("token_version").notNull().default(1),
     createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow(),
     deletedAt: timestamp('deleted_at', { mode: 'date', withTimezone: true })
@@ -236,3 +237,21 @@ export const incident_internal_notes = pgTable('incident_internal_notes', {
         .references(() => internal_users.userId, { onDelete: 'cascade' })
         .notNull()
 })
+
+// 16. Incident Tasks Table (Sub-Task Checklist)
+export const incident_tasks = pgTable('incident_tasks', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    isCompleted: boolean('is_completed').notNull().default(false),
+    order: integer('order').notNull().default(0),
+    requiresProof: boolean('requires_proof').notNull().default(false),
+    proofFileUrl: text('proof_file_url'),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { mode: 'date', withTimezone: true }),
+    incidentId: integer('incident_id')
+        .references(() => incidents.id, { onDelete: 'cascade' })
+        .notNull(),
+    createdByUserId: integer('created_by_user_id')
+        .references(() => users.id, { onDelete: 'set null' })
+});
