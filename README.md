@@ -1,4 +1,4 @@
-# PowerFleet IMS — AI-Powered Incident Management System
+# PowerFleet IMS — Incident Management System
 
 > A state-of-the-art, AI-driven fleet incident management platform built with Next.js 16, React 19, TypeScript, Drizzle ORM, and PostgreSQL.
 
