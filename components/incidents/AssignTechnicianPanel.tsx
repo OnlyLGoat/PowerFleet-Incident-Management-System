@@ -138,10 +138,11 @@ export default function AssignTechnicianPanel({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label htmlFor="assignmentNote" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Dispatch Instruction / Reason <span className="text-rose-500">*</span>
             </label>
             <input
+              id="assignmentNote"
               type="text"
               placeholder="Dispatch instruction / reason for assignment (Required)..."
               value={assignmentNote}

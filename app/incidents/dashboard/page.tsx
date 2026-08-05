@@ -393,7 +393,7 @@ export default function IncidentsDashboardPage() {
   );
 }
 
-function DashboardKPIs({ stats, loading, isClient }: { stats: DashboardStats | null; loading: boolean; isClient: boolean }) {
+function DashboardKPIs({ stats, loading, isClient }: Readonly<{ stats: DashboardStats | null; loading: boolean; isClient: boolean }>) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Metric 1: Total Incidents */}

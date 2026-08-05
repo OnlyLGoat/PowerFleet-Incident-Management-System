@@ -42,7 +42,7 @@ function getRouteTitle(pathname: string): string {
     }
   }
 
-  const lastSegment = parts[parts.length - 1] || "Workspace";
+  const lastSegment = parts.at(-1) || "Workspace";
   return lastSegment.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 

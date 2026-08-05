@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { incident_tasks, incidents, incident_attachments } from "@/db/schema";
+import { incident_tasks, incidents, incident_attachments, security_audit_events } from "@/db/schema";
 import { eq, and, isNull, asc, inArray, lt } from "drizzle-orm";
 
 interface StatusError extends Error {
@@ -90,26 +90,8 @@ export class TaskService {
     return newTask;
   }
 
-  /**
-   * Update task completion or title.
-   */
-  static async updateIncidentTask(
-    taskId: number, 
-    data: { isCompleted?: boolean; title?: string; proofFileUrl?: string },
-    userId?: number
-  ) {
-    if (!taskId || Number.isNaN(taskId)) {
-      throw createStatusError("Invalid task ID", 400);
-    }
-
-    const taskRecord = await db.query.incident_tasks.findFirst({
-      where: and(eq(incident_tasks.id, taskId), isNull(incident_tasks.deletedAt)),
-    });
-
-    if (!taskRecord) {
-      throw createStatusError("Task Not Found!", 404);
-    }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static async _enforceTaskConstraints(taskRecord: any, data: { isCompleted?: boolean; proofFileUrl?: string }) {
     if (data.isCompleted === true) {
       // 1. Enforce Proof Requirement
       const finalProofUrl = data.proofFileUrl || taskRecord.proofFileUrl;
@@ -138,6 +120,102 @@ export class TaskService {
         );
       }
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static async _linkProofAttachment(taskRecord: any, proofFileUrl: string, userId?: number) {
+    const proofUrl = proofFileUrl.trim();
+    if (!proofUrl) return;
+
+    // Automatically link proof file to incident_attachments table for the incident
+    const existingAttachment = await db.query.incident_attachments.findFirst({
+      where: and(
+        eq(incident_attachments.incidentId, taskRecord.incidentId),
+        eq(incident_attachments.fileUrl, proofUrl),
+        isNull(incident_attachments.deletedAt)
+      ),
+    });
+
+    if (!existingAttachment) {
+      let fileType = "image/png";
+      const lowerUrl = proofUrl.toLowerCase();
+      if (lowerUrl.endsWith(".pdf")) fileType = "application/pdf";
+      else if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")) fileType = "image/jpeg";
+      else if (lowerUrl.endsWith(".svg")) fileType = "image/svg+xml";
+
+      const uploaderId = userId || taskRecord.createdByUserId || 1;
+      await db.insert(incident_attachments).values({
+        incidentId: taskRecord.incidentId,
+        filename: `Sub-Task Proof: ${taskRecord.title}`,
+        fileUrl: proofUrl,
+        fileType: fileType,
+        uploadedById: uploaderId,
+      });
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static async _checkAndResolveIncident(updatedTask: any, userId?: number) {
+    if (!updatedTask) return;
+    
+    const allTasks = await db.query.incident_tasks.findMany({
+      where: and(
+        eq(incident_tasks.incidentId, updatedTask.incidentId),
+        isNull(incident_tasks.deletedAt)
+      ),
+      columns: {
+        id: true,
+        isCompleted: true,
+      },
+    });
+
+    const allCompleted = allTasks.every((t) => t.isCompleted);
+    
+    if (allCompleted && allTasks.length > 0) {
+      // Update the incident status to Resolved
+      await db.update(incidents)
+        .set({ 
+          status: "Resolved", 
+          resolvedAt: new Date(), 
+          updatedAt: new Date() 
+        })
+        .where(eq(incidents.id, updatedTask.incidentId));
+
+      const sysId = userId || 1;
+      
+      await db.insert(security_audit_events).values({
+        incidentTragetId: updatedTask.incidentId,
+        userId: sysId,
+        message: "System: Incident auto-resolved as all mandatory sequential sub-tasks were completed.",
+        ipAddress: "system",
+        attemptedEndpoint: "System Automation",
+        statusCode: 200,
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  /**
+   * Update task completion or title.
+   */
+  static async updateIncidentTask(
+    taskId: number, 
+    data: { isCompleted?: boolean; title?: string; proofFileUrl?: string },
+    userId?: number
+  ) {
+    if (!taskId || Number.isNaN(taskId)) {
+      throw createStatusError("Invalid task ID", 400);
+    }
+
+    const taskRecord = await db.query.incident_tasks.findFirst({
+      where: and(eq(incident_tasks.id, taskId), isNull(incident_tasks.deletedAt)),
+    });
+
+    if (!taskRecord) {
+      throw createStatusError("Task Not Found!", 404);
+    }
+
+    await this._enforceTaskConstraints(taskRecord, data);
 
     const updatePayload: Record<string, unknown> = {
       updatedAt: new Date(),
@@ -152,34 +230,8 @@ export class TaskService {
     }
 
     if (typeof data.proofFileUrl === "string" && data.proofFileUrl.trim()) {
-      const proofUrl = data.proofFileUrl.trim();
-      updatePayload.proofFileUrl = proofUrl;
-
-      // Automatically link proof file to incident_attachments table for the incident
-      const existingAttachment = await db.query.incident_attachments.findFirst({
-        where: and(
-          eq(incident_attachments.incidentId, taskRecord.incidentId),
-          eq(incident_attachments.fileUrl, proofUrl),
-          isNull(incident_attachments.deletedAt)
-        ),
-      });
-
-      if (!existingAttachment) {
-        let fileType = "image/png";
-        const lowerUrl = proofUrl.toLowerCase();
-        if (lowerUrl.endsWith(".pdf")) fileType = "application/pdf";
-        else if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")) fileType = "image/jpeg";
-        else if (lowerUrl.endsWith(".svg")) fileType = "image/svg+xml";
-
-        const uploaderId = userId || taskRecord.createdByUserId || 1;
-        await db.insert(incident_attachments).values({
-          incidentId: taskRecord.incidentId,
-          filename: `Sub-Task Proof: ${taskRecord.title}`,
-          fileUrl: proofUrl,
-          fileType: fileType,
-          uploadedById: uploaderId,
-        });
-      }
+      updatePayload.proofFileUrl = data.proofFileUrl.trim();
+      await this._linkProofAttachment(taskRecord, data.proofFileUrl, userId);
     }
 
     const [updatedTask] = await db

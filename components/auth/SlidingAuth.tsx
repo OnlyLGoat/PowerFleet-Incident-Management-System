@@ -32,6 +32,28 @@ const itemVariants: Variants = {
   },
 };
 
+const getValidationClasses = (value: string, type: 'email' | 'password' | 'name' | 'phone') => {
+  if (value.length === 0) return "border-slate-200 dark:border-slate-800 focus:border-emerald-500 focus:ring-emerald-500";
+  let isValid = false;
+  if (type === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  if (type === 'password') isValid = /^[A-Z](?=.*[0-9])(?=.*[^a-zA-Z0-9]).{4,}$/.test(value);
+  if (type === 'name') isValid = value.trim().length >= 2;
+  if (type === 'phone') isValid = value.trim().length >= 8;
+  return isValid
+    ? "border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500"
+    : "border-red-500 focus:border-red-500 focus:ring-red-500";
+};
+
+const handleAuthError = (err: unknown, defaultMessage: string, setError: (msg: string) => void) => {
+  if (axios.isAxiosError(err)) {
+    setError(err.response?.data?.error || err.response?.data?.message || err.message || defaultMessage);
+  } else if (err instanceof Error) {
+    setError(err.message || "An unexpected error occurred.");
+  } else {
+    setError("An unexpected error occurred.");
+  }
+};
+
 export default function SlidingAuth() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,27 +88,7 @@ export default function SlidingAuth() {
     setSuccess(null);
   };
 
-  const handleAuthError = (err: unknown, defaultMessage: string) => {
-    if (axios.isAxiosError(err)) {
-      setError(err.response?.data?.error || err.response?.data?.message || err.message || defaultMessage);
-    } else if (err instanceof Error) {
-      setError(err.message || "An unexpected error occurred.");
-    } else {
-      setError("An unexpected error occurred.");
-    }
-  };
 
-  const getValidationClasses = (value: string, type: 'email' | 'password' | 'name' | 'phone') => {
-    if (value.length === 0) return "border-slate-200 dark:border-slate-800 focus:border-emerald-500 focus:ring-emerald-500";
-    let isValid = false;
-    if (type === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    if (type === 'password') isValid = /^[A-Z](?=.*[0-9])(?=.*[^a-zA-Z0-9]).{4,}$/.test(value);
-    if (type === 'name') isValid = value.trim().length >= 2;
-    if (type === 'phone') isValid = value.trim().length >= 8;
-    return isValid
-      ? "border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500"
-      : "border-red-500 focus:border-red-500 focus:ring-red-500";
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +105,7 @@ export default function SlidingAuth() {
         router.push("/incidents/dashboard");
       }, 1000);
     }catch(err: unknown){
-      handleAuthError(err, "Invalid credentials");
+      handleAuthError(err, "Invalid credentials", setError);
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +129,7 @@ export default function SlidingAuth() {
         toggleMode(true);
       }, 2000);
     }catch(err: unknown){
-      handleAuthError(err, "Failed to create account");
+      handleAuthError(err, "Failed to create account", setError);
     } finally {
       setIsLoading(false);
     }

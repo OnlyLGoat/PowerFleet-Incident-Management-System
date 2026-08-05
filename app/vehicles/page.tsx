@@ -212,6 +212,123 @@ export default function VehiclesPage() {
     );
   });
 
+  const getTabLabel = (st: string) => {
+    if (st === "ALL") return "All Fleet";
+    if (st === "ACTIVE") return "Active Vehicles";
+    return "Deleted Vehicles";
+  };
+
+  const renderTableBody = () => {
+    if (loading) {
+      return (
+        <tr>
+          <td colSpan={7} className="py-12 text-center text-slate-400">
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="size-4 animate-spin text-emerald-500" />
+              <span>Loading fleet vehicles...</span>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+    
+    if (filteredVehicles.length === 0) {
+      return (
+        <tr>
+          <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+            No vehicles found matching criteria.
+          </td>
+        </tr>
+      );
+    }
+
+    return filteredVehicles.map((v) => (
+      <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+        <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">#{v.id}</td>
+        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">{v.name}</td>
+        <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
+          <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            {v.licensePlate}
+          </span>
+        </td>
+        <td className="py-3.5 px-4 font-mono text-slate-400">{v.imei}</td>
+        <td className="py-3.5 px-4">
+          {v.clientCompanyName ? (
+            <div>
+              <p className="font-bold text-slate-800 dark:text-slate-200">{v.clientCompanyName}</p>
+              {v.clientName && <p className="text-[11px] text-slate-400">{v.clientName} ({v.clientEmail})</p>}
+            </div>
+          ) : (
+            <span className="text-slate-400">Client ID: {v.clientId}</span>
+          )}
+        </td>
+        <td className="py-3.5 px-4">
+          {v.deletedAt ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
+              <Trash2 className="size-3" />
+              <span>Deleted</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border border-emerald-200 dark:border-emerald-800">
+              Active
+            </span>
+          )}
+        </td>
+        <td className="py-3.5 px-4 text-right">
+          <div className="flex items-center justify-end gap-1">
+            {v.deletedAt ? (
+              <button
+                type="button"
+                onClick={() => handleRestore(v.id, v.name)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-colors cursor-pointer"
+                title="Restore Vehicle"
+              >
+                <RotateCcw className="size-3.5 stroke-[2.5]" />
+                <span>Restore</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(v)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Reassign / Edit Vehicle"
+                >
+                  <Edit3 className="size-4" />
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Delete Vehicle"
+                  >
+                    <Trash2 className="size-4" />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Vehicle?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete vehicle &quot;{v.name}&quot;?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(v.id)}
+                        className="bg-rose-600 hover:bg-rose-700 text-white"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+    ));
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Page Header Banner */}
@@ -301,7 +418,7 @@ export default function VehiclesPage() {
                   : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               )}
             >
-              {st === "ALL" ? "All Fleet" : st === "ACTIVE" ? "Active Vehicles" : "Deleted Vehicles"}
+              {getTabLabel(st)}
             </button>
           ))}
         </div>
@@ -335,112 +452,7 @@ export default function VehiclesPage() {
             </thead>
 
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="size-4 animate-spin text-emerald-500" />
-                      <span>Loading fleet vehicles...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredVehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
-                    No vehicles found matching criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredVehicles.map((v) => (
-                  <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">#{v.id}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">{v.name}</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
-                      <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                        {v.licensePlate}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400">{v.imei}</td>
-                    <td className="py-3.5 px-4">
-                      {v.clientCompanyName ? (
-                        <div>
-                          <p className="font-bold text-slate-800 dark:text-slate-200">{v.clientCompanyName}</p>
-                          {v.clientName && <p className="text-[11px] text-slate-400">{v.clientName} ({v.clientEmail})</p>}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">Client ID: {v.clientId}</span>
-                      )}
-                    </td>
-
-                    {/* Status Column */}
-                    <td className="py-3.5 px-4">
-                      {v.deletedAt ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
-                          <Trash2 className="size-3" />
-                          <span>Deleted</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border border-emerald-200 dark:border-emerald-800">
-                          Active
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions Column */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {v.deletedAt ? (
-                          <button
-                            type="button"
-                            onClick={() => handleRestore(v.id, v.name)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-colors cursor-pointer"
-                            title="Restore Vehicle"
-                          >
-                            <RotateCcw className="size-3.5 stroke-[2.5]" />
-                            <span>Restore</span>
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(v)}
-                              className="p-2 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                              title="Reassign / Edit Vehicle"
-                            >
-                              <Edit3 className="size-4" />
-                            </button>
-                            <AlertDialog>
-                              <AlertDialogTrigger
-                                className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                                title="Delete Vehicle"
-                              >
-                                <Trash2 className="size-4" />
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Vehicle?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete vehicle &quot;{v.name}&quot;?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(v.id)}
-                                    className="bg-rose-600 hover:bg-rose-700 text-white"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              {renderTableBody()}
             </tbody>
           </table>
         </div>
@@ -515,12 +527,13 @@ export default function VehiclesPage() {
               </div>
 
               <div className="relative">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Assign to Client Profile *
-                </label>
+                </span>
                 <div className="relative">
-                  <div
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white flex items-center justify-between cursor-pointer"
+                  <button
+                    type="button"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white flex items-center justify-between cursor-pointer text-left"
                     onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
                   >
                     <span className={cn("truncate pr-2", formData.clientId ? "" : "text-slate-400")}>
@@ -529,7 +542,7 @@ export default function VehiclesPage() {
                         : "Select Client Account..."}
                     </span>
                     <Search className="size-4 text-slate-400" />
-                  </div>
+                  </button>
                   
                   {isClientDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 max-h-60 flex flex-col overflow-hidden">
@@ -554,9 +567,10 @@ export default function VehiclesPage() {
                             c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
                             c.email.toLowerCase().includes(clientSearch.toLowerCase())
                           ).map(c => (
-                            <div
+                            <button
+                              type="button"
                               key={c.userId}
-                              className="px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer text-slate-700 dark:text-slate-300 truncate"
+                              className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer text-slate-700 dark:text-slate-300 truncate"
                               title={`${c.companyName} (${c.name} - ${c.email})`}
                               onClick={() => {
                                 setFormData({ ...formData, clientId: String(c.userId) });
@@ -565,7 +579,7 @@ export default function VehiclesPage() {
                               }}
                             >
                               {c.companyName} <span className="text-slate-400">({c.name} - {c.email})</span>
-                            </div>
+                            </button>
                           ))
                         ) : (
                           <div className="px-3 py-4 text-center text-xs text-slate-400">

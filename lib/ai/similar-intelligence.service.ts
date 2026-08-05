@@ -143,6 +143,17 @@ STRICT MATCHING INSTRUCTIONS:
       "AI High Precision Intelligence"
     );
   }
+  private static _calculateScore(targetText: string, pastText: string, targetType: string, pastType: string): number {
+    let score = 0;
+    if (targetType === pastType) score += 35;
+    const keywords = ["gps", "telematics", "antenna", "signal", "fuel", "probe", "sensor", "can-bus", "voltage", "brake", "hydraulic", "pressure", "leak", "cylinder", "refrigeration", "battery"];
+    for (const kw of keywords) {
+      if (targetText.includes(kw) && pastText.includes(kw)) {
+        score += 15;
+      }
+    }
+    return score;
+  }
 
   private static _calculateLocalHeuristic(targetIncident: { title: string; description: string; type: string; vehicle?: { name: string; licensePlate: string } }, pastResolved: Array<{ id: number; title: string; description: string; type: string; resolutionNote?: string | null }>): SimilarIntelligenceResult {
     let bestLocalMatch: SimilarIntelligenceResult = {
@@ -161,16 +172,7 @@ STRICT MATCHING INSTRUCTIONS:
 
     for (const past of pastResolved) {
       const pastText = `${past.title} ${past.description} ${past.type}`.toLowerCase();
-      let score = 0;
-
-      if (targetIncident.type === past.type) score += 35;
-
-      const keywords = ["gps", "telematics", "antenna", "signal", "fuel", "probe", "sensor", "can-bus", "voltage", "brake", "hydraulic", "pressure", "leak", "cylinder", "refrigeration", "battery"];
-      for (const kw of keywords) {
-        if (targetText.includes(kw) && pastText.includes(kw)) {
-          score += 15;
-        }
-      }
+      const score = this._calculateScore(targetText, pastText, targetIncident.type, past.type);
 
       if (score > highestScore && score >= 50) {
         highestScore = score;

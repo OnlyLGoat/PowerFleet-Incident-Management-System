@@ -104,9 +104,9 @@ export default function IncidentStatusPriorityPanel({
       <form onSubmit={handleApplyChanges} className="space-y-4">
         {/* Status Selection */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
             Ticket Status
-          </label>
+          </span>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             {STATUS_OPTIONS.map((st) => (
               <button
@@ -128,9 +128,9 @@ export default function IncidentStatusPriorityPanel({
 
         {/* Priority Selection */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
             Ticket Priority Level
-          </label>
+          </span>
           <div className="grid grid-cols-4 gap-1.5">
             {PRIORITY_OPTIONS.map((pr) => (
               <button
@@ -140,11 +140,11 @@ export default function IncidentStatusPriorityPanel({
                 className={cn(
                   "py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition-all text-center truncate",
                   selectedPriority === pr
-                    ? pr === "Critical"
-                      ? "bg-rose-600 text-white border-rose-600 shadow-sm"
-                      : pr === "High"
-                      ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                      : "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                    ? (pr === "Critical"
+                        ? "bg-rose-600 text-white border-rose-600 shadow-sm"
+                        : pr === "High"
+                          ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                          : "bg-emerald-500 text-white border-emerald-500 shadow-sm")
                     : "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300"
                 )}
               >
@@ -156,10 +156,11 @@ export default function IncidentStatusPriorityPanel({
 
         {/* Reason / Audit Note Input */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <label htmlFor="updateMessage" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Reason / Update Note <span className="text-rose-500">*</span>
           </label>
           <input
+            id="updateMessage"
             type="text"
             placeholder="Audit log note / reason for update (Required)..."
             value={updateMessage}
