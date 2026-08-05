@@ -250,8 +250,8 @@ export default function UsersManagementPage() {
     const matchesSearch =
       u.name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
-      (u.companyName && u.companyName.toLowerCase().includes(q)) ||
-      (u.specialty && u.specialty.toLowerCase().includes(q));
+      (u.companyName?.toLowerCase().includes(q)) ||
+      (u.specialty?.toLowerCase().includes(q));
 
     return matchesSearch;
   });
@@ -429,16 +429,20 @@ export default function UsersManagementPage() {
 
                     {/* Department / Company */}
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
-                      {u.companyName ? (
-                        <div>
-                          <p className="font-bold text-slate-800 dark:text-slate-200">{u.companyName}</p>
-                          {u.phone && <p className="text-[11px] text-slate-400 font-mono">{u.phone}</p>}
-                        </div>
-                      ) : u.department ? (
-                        <span className="font-medium">{u.department}</span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
+                      {(() => {
+                        if (u.companyName) {
+                          return (
+                            <div>
+                              <p className="font-bold text-slate-800 dark:text-slate-200">{u.companyName}</p>
+                              {u.phone && <p className="text-[11px] text-slate-400 font-mono">{u.phone}</p>}
+                            </div>
+                          );
+                        }
+                        if (u.department) {
+                          return <span className="font-medium">{u.department}</span>;
+                        }
+                        return <span className="text-slate-400">—</span>;
+                      })()}
                     </td>
 
                     {/* Interactive Permissions & Capabilities Column */}
@@ -513,31 +517,39 @@ export default function UsersManagementPage() {
 
                     {/* Active Status */}
                     <td className="py-3.5 px-4">
-                      {u.deletedAt ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
-                          <Trash2 className="size-3" />
-                          <span>Deleted</span>
-                        </span>
-                      ) : u.role !== "ClientUser" ? (
-                        <button
-                          type="button"
-                          onClick={() => handleQuickToggle(u, "isActive", Boolean(u.isActive))}
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer",
-                            u.isActive !== false
-                              ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border-emerald-200 dark:border-emerald-800"
-                              : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 border-rose-200 dark:border-rose-800"
-                          )}
-                          title="Click to toggle account activation status"
-                        >
-                          <Power className="size-3" />
-                          <span>{u.isActive !== false ? "Active" : "Deactivated"}</span>
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] text-slate-500 font-bold bg-slate-100 dark:bg-slate-800">
-                          Active
-                        </span>
-                      )}
+                      {(() => {
+                        if (u.deletedAt) {
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                              <Trash2 className="size-3" />
+                              <span>Deleted</span>
+                            </span>
+                          );
+                        }
+                        if (u.role !== "ClientUser") {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickToggle(u, "isActive", Boolean(u.isActive))}
+                              className={cn(
+                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors cursor-pointer",
+                                u.isActive !== false
+                                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 border-emerald-200 dark:border-emerald-800"
+                                  : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 border-rose-200 dark:border-rose-800"
+                              )}
+                              title="Click to toggle account activation status"
+                            >
+                              <Power className="size-3" />
+                              <span>{u.isActive !== false ? "Active" : "Deactivated"}</span>
+                            </button>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] text-slate-500 font-bold bg-slate-100 dark:bg-slate-800">
+                            Active
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Actions */}

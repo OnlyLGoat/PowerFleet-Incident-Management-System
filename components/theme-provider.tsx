@@ -22,7 +22,6 @@ export function ThemeProvider({
   readonly children: React.ReactNode;
   readonly defaultTheme?: Theme;
   readonly storageKey?: string;
-  readonly disableTransitionOnChange?: boolean;
 }) {
   const [theme, setThemeState] = React.useState<Theme>(() => {
     if (typeof window !== "undefined") {

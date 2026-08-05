@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface TechActionPanelProps {
-  incidentId: number;
-  currentStatus: string;
-  onUpdate: () => void;
+  readonly incidentId: number;
+  readonly currentStatus: string;
+  readonly onUpdate: () => void;
 }
 
 export default function TechActionPanel({ incidentId, currentStatus, onUpdate }: TechActionPanelProps) {
@@ -139,6 +139,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
           />
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => handleStatusChange("Resolved")}
               disabled={loading}
               className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
@@ -147,6 +148,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
               Confirm Resolution
             </button>
             <button
+              type="button"
               onClick={() => setShowResolveForm(false)}
               disabled={loading}
               className="px-4 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-colors"
@@ -160,6 +162,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
           {/* Status Actions */}
           {currentStatus !== "In Progress" && currentStatus !== "Resolved" && currentStatus !== "Closed" && (
             <button
+              type="button"
               onClick={() => handleStatusChange("In Progress")}
               disabled={loading}
               className="col-span-2 sm:col-span-1 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
@@ -183,6 +186,7 @@ export default function TechActionPanel({ incidentId, currentStatus, onUpdate }:
           
           {/* Upload Action */}
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className={cn(

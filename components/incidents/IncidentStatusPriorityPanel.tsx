@@ -7,10 +7,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface IncidentStatusPriorityPanelProps {
-  incidentId: number;
-  currentStatus: string;
-  currentPriority: string;
-  onUpdate: () => void;
+  readonly incidentId: number;
+  readonly currentStatus: string;
+  readonly currentPriority: string;
+  readonly onUpdate: () => void;
 }
 
 const STATUS_OPTIONS = [
@@ -139,13 +139,12 @@ export default function IncidentStatusPriorityPanel({
                 onClick={() => setSelectedPriority(pr)}
                 className={cn(
                   "py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition-all text-center truncate",
-                  selectedPriority === pr
-                    ? (pr === "Critical"
-                        ? "bg-rose-600 text-white border-rose-600 shadow-sm"
-                        : pr === "High"
-                          ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                          : "bg-emerald-500 text-white border-emerald-500 shadow-sm")
-                    : "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                  (() => {
+                    if (selectedPriority !== pr) return "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300";
+                    if (pr === "Critical") return "bg-rose-600 text-white border-rose-600 shadow-sm";
+                    if (pr === "High") return "bg-amber-500 text-white border-amber-500 shadow-sm";
+                    return "bg-emerald-500 text-white border-emerald-500 shadow-sm";
+                  })()
                 )}
               >
                 {pr}

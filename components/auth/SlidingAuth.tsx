@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
@@ -35,8 +35,8 @@ const itemVariants: Variants = {
 const getValidationClasses = (value: string, type: 'email' | 'password' | 'name' | 'phone') => {
   if (value.length === 0) return "border-slate-200 dark:border-slate-800 focus:border-emerald-500 focus:ring-emerald-500";
   let isValid = false;
-  if (type === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  if (type === 'password') isValid = /^[A-Z](?=.*[0-9])(?=.*[^a-zA-Z0-9]).{4,}$/.test(value);
+  if (type === 'email') isValid = /^\S+@\S+\.\S+$/.test(value);
+  if (type === 'password') isValid = /^[A-Z](?=.*\d)(?=.*[^a-zA-Z\d]).{4,}$/.test(value);
   if (type === 'name') isValid = value.trim().length >= 2;
   if (type === 'phone') isValid = value.trim().length >= 8;
   return isValid
@@ -59,15 +59,13 @@ export default function SlidingAuth() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
   const [isLogin, setIsLogin] = useState(() => !(mode === "signup" || mode === "register"));
-  const [prevMode, setPrevMode] = useState<string | null>(mode);
-  if (mode !== prevMode) {
-    setPrevMode(mode);
+  useEffect(() => {
     if (mode === "signup" || mode === "register") {
       setIsLogin(false);
     } else if (mode === "login") {
       setIsLogin(true);
     }
-  }
+  }, [mode]);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")

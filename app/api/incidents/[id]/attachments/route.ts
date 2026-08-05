@@ -8,8 +8,8 @@ import path from 'path';
 export const POST = withAuth(async (req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
     try {
         const p = await params;
-        const incidentId = parseInt(p.id, 10);
-        if (isNaN(incidentId)) {
+        const incidentId = Number.parseInt(p.id, 10);
+        if (Number.isNaN(incidentId)) {
             return NextResponse.json({ error: "Invalid incident ID" }, { status: 400 });
         }
 

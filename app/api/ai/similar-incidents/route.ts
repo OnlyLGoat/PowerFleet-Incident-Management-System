@@ -26,7 +26,7 @@ export const POST = withAuth(async (req: AuthenticatedRequest) => {
     }
 
     const body = await req.json().catch(() => null);
-    if (!body || !body.incidentId) {
+    if (!body?.incidentId) {
       return NextResponse.json({ error: "incidentId is required." }, { status: 400 });
     }
 

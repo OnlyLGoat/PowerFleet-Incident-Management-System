@@ -131,7 +131,7 @@ STRICT MATCHING INSTRUCTIONS:
         }
 
         // Validate matched ticket ID exists in candidate pool
-        const matched = pastResolved.find((p) => p.id === result.relevantPastTicketId);
+        const matched = pastResolved.some((p) => p.id === result.relevantPastTicketId);
         if (!matched) {
           result.relevantPastTicketId = pastResolved[0].id;
           result.relevantPastTicketCode = `INC-${String(pastResolved[0].id).padStart(3, "0")}`;

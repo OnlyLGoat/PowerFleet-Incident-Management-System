@@ -324,22 +324,29 @@ export default function IncidentSubTasksWidget({
       )}
 
       {/* Task List Items */}
-      {loading ? (
-        <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-          <Loader2 className="size-3.5 animate-spin text-emerald-500" />
-          <span>Loading tasks...</span>
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="py-6 text-center text-xs text-slate-400 space-y-1">
-          <p className="font-semibold text-slate-500 dark:text-slate-400">No sub-tasks logged</p>
-          {isManagerOrAdmin ? (
-            <p className="text-[11px]">Click &quot;Add Diagnostic Sub-Task&quot; above to create steps.</p>
-          ) : (
-            <p className="text-[11px]">Support Manager has not logged sub-tasks yet.</p>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
+      {(() => {
+        if (loading) {
+          return (
+            <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+              <Loader2 className="size-3.5 animate-spin text-emerald-500" />
+              <span>Loading tasks...</span>
+            </div>
+          );
+        }
+        if (tasks.length === 0) {
+          return (
+            <div className="py-6 text-center text-xs text-slate-400 space-y-1">
+              <p className="font-semibold text-slate-500 dark:text-slate-400">No sub-tasks logged</p>
+              {isManagerOrAdmin ? (
+                <p className="text-[11px]">Click &quot;Add Diagnostic Sub-Task&quot; above to create steps.</p>
+              ) : (
+                <p className="text-[11px]">Support Manager has not logged sub-tasks yet.</p>
+              )}
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-2">
           {tasks.map((task, idx) => {
             const isPriorIncomplete = tasks.slice(0, idx).some((t) => !t.isCompleted);
             const isDisabled = isPriorIncomplete && !task.isCompleted;
@@ -349,11 +356,11 @@ export default function IncidentSubTasksWidget({
                 key={task.id}
                 className={cn(
                   "p-3 rounded-xl border transition-all text-xs space-y-2",
-                  task.isCompleted
-                    ? "bg-slate-50/50 dark:bg-slate-950/40 border-slate-200/60 dark:border-slate-800/60 text-slate-400"
-                    : isDisabled
-                    ? "bg-slate-100/40 dark:bg-slate-950/20 border-slate-200/40 dark:border-slate-800/40 opacity-70"
-                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+                  (() => {
+                    if (task.isCompleted) return "bg-slate-50/50 dark:bg-slate-950/40 border-slate-200/60 dark:border-slate-800/60 text-slate-400";
+                    if (isDisabled) return "bg-slate-100/40 dark:bg-slate-950/20 border-slate-200/40 dark:border-slate-800/40 opacity-70";
+                    return "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white";
+                  })()
                 )}
               >
                 {/* Task Title Row */}
@@ -370,13 +377,11 @@ export default function IncidentSubTasksWidget({
                       )}
                       title={isDisabled ? "Sequential constraint: Complete prior tasks first" : "Toggle Task Completion"}
                     >
-                      {updatingTaskId === task.id ? (
-                        <Loader2 className="size-4 animate-spin text-emerald-500" />
-                      ) : task.isCompleted ? (
-                        <CheckSquare className="size-4" />
-                      ) : (
-                        <Square className="size-4" />
-                      )}
+                      {(() => {
+                        if (updatingTaskId === task.id) return <Loader2 className="size-4 animate-spin text-emerald-500" />;
+                        if (task.isCompleted) return <CheckSquare className="size-4" />;
+                        return <Square className="size-4" />;
+                      })()}
                     </button>
 
                     <div className="space-y-1 flex-1">
@@ -503,7 +508,8 @@ export default function IncidentSubTasksWidget({
             );
           })}
         </div>
-      )}
+        );
+      })()}
 
       {/* AI Task Suggestion Modal */}
       <AiTaskSuggestModal

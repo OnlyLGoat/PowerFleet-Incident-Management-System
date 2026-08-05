@@ -168,30 +168,37 @@ export default function AiTaskSuggestModal({
         {/* Content Body */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-600 dark:text-slate-400 flex items-center gap-2">
               <AlertCircle className="size-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {loadingSuggestions ? (
-            <div className="py-16 text-center space-y-3">
-              <Loader2 className="size-8 animate-spin text-emerald-500 mx-auto" />
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Analyzing Incident #{incidentId} & Repair Blueprints...
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Evaluating symptoms, past resolved tickets, and existing tasks.
-              </p>
-            </div>
-          ) : suggestions.length === 0 ? (
-            <div className="py-12 text-center space-y-2">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                No new sub-tasks generated for this incident.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
+          {(() => {
+            if (loadingSuggestions) {
+              return (
+                <div className="py-16 text-center space-y-3">
+                  <Loader2 className="size-8 animate-spin text-emerald-500 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Analyzing Incident #{incidentId} & Repair Blueprints...
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Evaluating symptoms, past resolved tickets, and existing tasks.
+                  </p>
+                </div>
+              );
+            }
+            if (suggestions.length === 0) {
+              return (
+                <div className="py-12 text-center space-y-2">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    No new sub-tasks generated for this incident.
+                  </p>
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-semibold uppercase tracking-wider">
                 <span>Select & Edit Tasks to Accept</span>
                 <span>
@@ -254,8 +261,9 @@ export default function AiTaskSuggestModal({
                   </div>
                 </div>
               ))}
-            </div>
-          )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer Actions */}

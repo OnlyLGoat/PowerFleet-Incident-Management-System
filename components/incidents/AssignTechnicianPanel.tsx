@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { TechnicianItem } from "@/app/api/technicians/route";
 
 interface AssignTechnicianPanelProps {
-  incidentId: number;
-  currentAssignedId?: number | null;
-  onUpdate: () => void;
+  readonly incidentId: number;
+  readonly currentAssignedId?: number | null;
+  readonly onUpdate: () => void;
 }
 
 export default function AssignTechnicianPanel({

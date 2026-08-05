@@ -320,7 +320,11 @@ export default function IncidentReportModal({
         const cleanTitle = task.title.length > 55 ? task.title.slice(0, 52) + "..." : task.title;
         doc.text(cleanTitle, margin + 14, y + 4);
 
-        doc.text(task.requiresProof ? (task.hasProof ? "Proof Uploaded" : "Proof Required") : "Standard Step", margin + 120, y + 4);
+        let proofStatus = "Standard Step";
+        if (task.requiresProof) {
+          proofStatus = task.hasProof ? "Proof Uploaded" : "Proof Required";
+        }
+        doc.text(proofStatus, margin + 120, y + 4);
 
         if (task.isCompleted) {
           doc.setFont("helvetica", "bold");
@@ -414,20 +418,28 @@ export default function IncidentReportModal({
 
         {/* Modal Display Body */}
         <div className="p-6 max-h-[75vh] overflow-y-auto space-y-6">
-          {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="size-8 animate-spin text-indigo-600" />
-              <p className="text-xs font-medium text-slate-500">Compiling executive fleet report data...</p>
-            </div>
-          ) : error ? (
-            <div className="py-12 flex flex-col items-center text-center gap-3">
-              <div className="p-3 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-200 dark:border-rose-900/50">
-                <AlertCircle className="size-6" />
-              </div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{error}</p>
-            </div>
-          ) : stats ? (
-            <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl space-y-6 border border-slate-100 dark:border-slate-800">
+          {(() => {
+            if (loading) {
+              return (
+                <div className="py-20 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="size-8 animate-spin text-indigo-600" />
+                  <p className="text-xs font-medium text-slate-500">Compiling executive fleet report data...</p>
+                </div>
+              );
+            }
+            if (error) {
+              return (
+                <div className="py-12 flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-200 dark:border-rose-900/50">
+                    <AlertCircle className="size-6" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{error}</p>
+                </div>
+              );
+            }
+            if (stats) {
+              return (
+                <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl space-y-6 border border-slate-100 dark:border-slate-800">
               
               {/* Report Document Title Header */}
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -586,8 +598,11 @@ export default function IncidentReportModal({
                 <span>PowerFleet Incident Management System &copy; {new Date().getFullYear()}</span>
                 <span>CONFIDENTIAL & PROPRIETARY</span>
               </div>
-            </div>
-          ) : null}
+              </div>
+            );
+          }
+          return null;
+        })()}
         </div>
       </div>
     </div>
